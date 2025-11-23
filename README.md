@@ -22,7 +22,7 @@ The app allows you to:
 - **Export plots as PDF/PNG** for your publications
 - **Export Python code** to tweak the plot further locally
 
-If you want to make or adjust plots locally, clone the git repository.
+If you want to make or adjust plots locally, clone the git repository. Unpack the chains archive if needed.
 You then have access to two scripts:
 
 - **`r_ns_plot.ipynb/`:**
