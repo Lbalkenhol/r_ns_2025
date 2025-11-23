@@ -82,31 +82,12 @@ When showing data constraints in your plots, please also cite the associated pap
 
 The plotting code is based on the [BICEP/Keck 2018 plotting script](http://bicepkeck.org/bk18_2021_release.html) ([arXiv:2110.00483](https://arxiv.org/abs/2110.00483)) and uses [GetDist](https://github.com/cmbant/getdist) ([arXiv:1910.13970](https://arxiv.org/abs/1910.13970)).
 
-===================
+---
 
-.. |cnrs| image:: https://github.com/Lbalkenhol/candl/raw/main/logos/cnrs_logo.jpeg
-   :alt: CNRS
-   :height: 100px
-   :width: 100px
-
-.. |erc| image:: https://github.com/Lbalkenhol/candl/raw/main/logos/erc_logo.jpeg
-   :alt: ERC
-   :height: 100px
-   :width: 100px
-
-.. |NEUCosmoS| image:: https://github.com/Lbalkenhol/candl/raw/main/logos/neucosmos_logo.png
-   :alt: NEUCosmoS
-   :height: 100px
-   :width: 159px
-
-.. |IAP| image:: https://github.com/Lbalkenhol/candl/raw/main/logos/IAP_logo.png
-   :alt: IAP
-   :height: 100px
-   :width: 149px
-
-.. |Sorbonne| image:: https://github.com/Lbalkenhol/candl/raw/main/logos/sorbonne_logo.jpeg
-   :alt: Sorbonne
-   :height: 100px
-   :width: 248px
-
-|cnrs| |erc| |NEUCosmoS| |IAP| |Sorbonne|
+<p align="center">
+  <img src="https://github.com/Lbalkenhol/candl/raw/main/logos/cnrs_logo.jpeg" alt="CNRS" height="100"/>
+  <img src="https://github.com/Lbalkenhol/candl/raw/main/logos/erc_logo.jpeg" alt="ERC" height="100"/>
+  <img src="https://github.com/Lbalkenhol/candl/raw/main/logos/neucosmos_logo.png" alt="NEUCosmoS" height="100"/>
+  <img src="https://github.com/Lbalkenhol/candl/raw/main/logos/IAP_logo.png" alt="IAP" height="100"/>
+  <img src="https://github.com/Lbalkenhol/candl/raw/main/logos/sorbonne_logo.jpeg" alt="Sorbonne" height="100"/>
+</p>
