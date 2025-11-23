@@ -10,9 +10,9 @@ Tou can also try the **[online plotting app](TBD)** - no installation required.
 [![Paper](https://img.shields.io/badge/arXiv-TBD-b31b1b.svg)](TBD)
 [![Streamlit App](https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit)](TBD)
 
-## Making $r$-$n_s$ Plots
+## Making $r$ - $n_s$ Plots
 
-To make your own $r$-$n_s$ plots you can use the **[online plotting app](TBD)** (no installation required!).
+To make your own $r$ - $n_s$ plots you can use the **[online plotting app](TBD)** (no installation required!).
 The app allows you to:
 - Toggle between different data constraints and forecasts
 - Add your own forecast contours
