@@ -1,5 +1,3 @@
-<!-- filepath: /Users/lennart/Research/software/r_ns_2025/README.rst -->
-
 .. |arxiv-badge| image:: https://img.shields.io/badge/arXiv-TBD-b31b1b.svg
    :target: TBD
    :alt: Paper
@@ -38,11 +36,13 @@ The app allows you to:
 If you want to make or adjust plots locally, clone the git repository.
 You then have access to two scripts:
 
-- **r_ns_plot.ipynb:**
-  A jupyter notebook that recreates the two paper plots. It also features a simpler version of the data plot in the paper as a starting point for modifications.
+``r_ns_plot.ipynb``:
+
+- A jupyter notebook that recreates the two paper plots. It also features a simpler version of the data plot in the paper as a starting point for modifications.
   
-- **r_ns_plot.py:**
-  A light python script that creates a simpler version of the data plot in the paper as a starting point for modifications. 
+``r_ns_plot.py``:
+
+- A light python script that creates a simpler version of the data plot in the paper as a starting point for modifications. 
 
 Note that these scripts come with the following requirements:
 
@@ -59,13 +59,12 @@ MCMC products
 
 The ``chains/`` folder contains MCMC chains and best-fit points obtained using `Cobaya <https://github.com/CobayaSampler/cobaya>`_ and `CLASS <http://class-code.net/>`_ for :math:`\Lambda\mathrm{CDM}\!+\!r`:
 
-**SPA_BK/:**
-
+``SPA_BK/``:
 - Primary CMB: Planck PR3 (no low-E), SPT-3G D1, ACT DR6, BK18
 - CMB Lensing: Planck PR4, SPT-3G MUSE, ACT DR6
 - Planck-based :math:`\tau_{\rm reio}` prior
 
-**SPA_BK_DESI/:**
+``SPA_BK_DESI/``:
 
 - Primary CMB: Planck PR3 (no low-E), SPT-3G D1, ACT DR6, BK18
 - CMB Lensing: Planck PR4, SPT-3G MUSE, ACT DR6
