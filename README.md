@@ -1,7 +1,7 @@
 [arxiv-url]: TBD
 [streamlit-url]: TBD
 
-# Inflation in 2025: Constraints on $r$ and $n_s$ using the latest CMB and BAO data
+# Inflation in 2025:<br>Constraints on $r$ and $n_s$ using the latest CMB and BAO data
 
 This repository accompanies [TBD paper](TBD), which presents constraints on the tensor-to-scalar ratio $r$ and the scalar spectral index $n_s$ based on the latest cosmic microwave background (CMB) and baryon acoustic oscillation (BAO) data available in 2025.
 Here, you can find the data products of the Monte Carlo Markov Chain analysis performed in the paper as well as plotting scripts that allow you to reproduce the paper plots and make your own modified versions.
