@@ -33,6 +33,7 @@ You then have access to two scripts:
 
 Note that these scripts come with the following requirements:
 
+```
 - Python 3.8+
 - numpy
 - matplotlib
@@ -40,6 +41,7 @@ Note that these scripts come with the following requirements:
 - seaborn
 - getdist
 - jupyter (to run the notebook)
+```
 
 ## MCMC products
 
@@ -63,7 +65,8 @@ Please see the paper for more details. All chains have had burn-in removed.
 ```
 r_ns_2025/
 ├── streamlit_app.py          # Online plotting app
-├── r_ns_plot.ipynb           # Jupyter notebook of paper plots
+├── r_ns_plot.py              # Simple plotting script
+├── r_ns_plot.ipynb           # Jupyter notebook for paper plots
 ├── theory_models.py          # Inflation model predictions
 ├── plot_style.py             # Matplotlib styling and configuration
 ├── legend_utils.py           # Custom legend handlers
