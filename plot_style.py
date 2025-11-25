@@ -15,44 +15,111 @@ import seaborn as sns
 # Custom Legend Handler
 # ============================================================================
 
+
 class HandlerTwoLines(HandlerBase):
     """Custom matplotlib legend handler for two-line entries."""
-    
-    def __init__(self, colors=['k', 'k'], linestyles=['-', '--'], linewidths=[1., 1.]):
+
+    def __init__(
+        self, colors=["k", "k"], linestyles=["-", "--"], linewidths=[1.0, 1.0]
+    ):
         self.colors = colors
         self.linestyles = linestyles
         self.linewidths = linewidths
         super().__init__()
 
-    def create_artists(self, legend, orig_handle,
-                       xdescent, ydescent, width, height, fontsize, trans):
+    def create_artists(
+        self, legend, orig_handle, xdescent, ydescent, width, height, fontsize, trans
+    ):
         """Create two horizontal lines, one above the other with separation."""
         lines = []
-        
+
         # Top line (solid)
         y_top = ydescent + height * 0.65
-        line1 = Line2D([xdescent, xdescent + width], [y_top, y_top],
-                       color=self.colors[0], linestyle=self.linestyles[0], 
-                       linewidth=self.linewidths[0], transform=trans)
-        
+        line1 = Line2D(
+            [xdescent, xdescent + width],
+            [y_top, y_top],
+            color=self.colors[0],
+            linestyle=self.linestyles[0],
+            linewidth=self.linewidths[0],
+            transform=trans,
+        )
+
         # Bottom line (dashed) - more separated
         y_bottom = ydescent + height * 0.2
-        line2 = Line2D([xdescent, xdescent + width], [y_bottom, y_bottom],
-                       color=self.colors[1], linestyle=self.linestyles[1],
-                       linewidth=self.linewidths[1], transform=trans)
-        
+        line2 = Line2D(
+            [xdescent, xdescent + width],
+            [y_bottom, y_bottom],
+            color=self.colors[1],
+            linestyle=self.linestyles[1],
+            linewidth=self.linewidths[1],
+            transform=trans,
+        )
+
         lines.extend([line1, line2])
         return lines
+
+
+class HandlerLineWithEndMarkers(HandlerBase):
+    """Custom matplotlib legend handler for line with markers at both ends."""
+
+    def __init__(self, marker="s", markersize=6, color="k", linewidth=1.2):
+        self.marker = marker
+        self.markersize = markersize
+        self.color = color
+        self.linewidth = linewidth
+        super().__init__()
+
+    def create_artists(
+        self, legend, orig_handle, xdescent, ydescent, width, height, fontsize, trans
+    ):
+        """Create a line with markers at both ends."""
+        # Create a line in the middle
+        y_center = ydescent + height * 0.5
+        line = Line2D(
+            [xdescent, xdescent + width],
+            [y_center, y_center],
+            color=self.color,
+            linestyle="-",
+            linewidth=self.linewidth,
+            transform=trans,
+        )
+
+        # Create markers at both ends
+        x_left = xdescent + width * 0.1
+        x_right = xdescent + width * 0.9
+
+        marker_left = Line2D(
+            [x_left],
+            [y_center + height * 0.05],
+            marker=self.marker,
+            markersize=self.markersize,
+            color=self.color,
+            linestyle="",
+            transform=trans,
+        )
+
+        marker_right = Line2D(
+            [x_right],
+            [y_center + height * 0.05],
+            marker=self.marker,
+            markersize=self.markersize,
+            color=self.color,
+            linestyle="",
+            transform=trans,
+        )
+
+        return [line, marker_left, marker_right]
 
 
 # ============================================================================
 # Plot Style Configuration
 # ============================================================================
 
+
 def set_plot_style(params=None, columnwidth=246, height_ratio=1.618):
     """
     Set the plotting style for publication-quality figures.
-    
+
     Parameters
     ----------
     params : dict, optional
@@ -61,7 +128,7 @@ def set_plot_style(params=None, columnwidth=246, height_ratio=1.618):
         Figure width in points (default: 246)
     height_ratio : float, optional
         Height to width ratio (default: 1.618, golden ratio)
-    
+
     Returns
     -------
     dict
@@ -69,17 +136,15 @@ def set_plot_style(params=None, columnwidth=246, height_ratio=1.618):
     """
     # Start with candl defaults (merged with our settings)
     rc("text", usetex=True)
-    
+
     plt.rcParams.update(
         {
             # Font settings
             "font.family": "serif",
             "font.serif": ["Computer Modern Roman"],
-            "text.latex.preamble": r'\usepackage{amsmath, xfrac}',
-            
+            "text.latex.preamble": r"\usepackage{amsmath, xfrac}",
             # Figure size
             "figure.figsize": (columnwidth / 72, columnwidth / 72 / height_ratio),
-            
             # Font sizes (candl values take precedence)
             "axes.labelsize": 10,
             "axes.titlesize": 12,
@@ -87,15 +152,12 @@ def set_plot_style(params=None, columnwidth=246, height_ratio=1.618):
             "legend.fontsize": 10,
             "xtick.labelsize": 8,
             "ytick.labelsize": 8,
-            
             # Axes settings
             "axes.linewidth": 1.5,
             "axes.grid": False,
             "axes.xmargin": 0.02,
-            
             # Legend
             "legend.frameon": False,
-            
             # Tick settings (candl values where applicable)
             "xtick.direction": "in",
             "ytick.direction": "in",
@@ -103,31 +165,29 @@ def set_plot_style(params=None, columnwidth=246, height_ratio=1.618):
             "ytick.major.size": 4,
             "xtick.minor.size": 2,
             "ytick.minor.size": 2,
-            "xtick.major.width": 1.,
-            "ytick.major.width": 1.,
-            "xtick.minor.width": 1.,
-            "ytick.minor.width": 1.,
-            
+            "xtick.major.width": 1.0,
+            "ytick.major.width": 1.0,
+            "xtick.minor.width": 1.0,
+            "ytick.minor.width": 1.0,
             # Color cycle
             "axes.prop_cycle": cycler(
-                linestyle=["-", "--", "-.", ":", (0, (3, 5, 1, 5))]*2,
-                color=sns.color_palette('colorblind')
+                linestyle=["-", "--", "-.", ":", (0, (3, 5, 1, 5))] * 2,
+                color=sns.color_palette("colorblind"),
             ),
-            
             # Save settings
             "savefig.dpi": 300,
             "savefig.format": "pdf",
             "savefig.bbox": "tight",
-            "savefig.facecolor": '#FF000000',
+            "savefig.facecolor": "#FF000000",
         }
     )
-    
+
     if params is not None:
         plt.rcParams.update(params)
-    
+
     plt.clf()
     plt.close()
-    
+
     return plt.rcParams
 
 
@@ -142,32 +202,26 @@ set_plot_style()
 # Style settings for different datasets
 style_dict = {
     "SPA_BK": {
-        "colour": sns.color_palette('colorblind')[0],
+        "colour": sns.color_palette("colorblind")[0],
         "ls": "-",
         "lw": 0.75,
         "filled": True,
-        "label": "SPA+BK"
+        "label": "SPA+BK",
     },
     "SPA_BK_DESI": {
-        "colour": sns.color_palette('colorblind')[-1],
+        "colour": sns.color_palette("colorblind")[-1],
         "ls": "-",
         "lw": 1.5,
         "filled": False,
-        "label": "SPA+BK+DESI"
+        "label": "SPA+BK+DESI",
     },
-    "FC": {
-        "colour": "k",
-        "ls": "-",
-        "lw": 1.5,
-        "filled": False,
-        "label": "CMB 2030s"
-    },
+    "FC": {"colour": "k", "ls": "-", "lw": 1.5, "filled": False, "label": "CMB 2030s"},
     "FC_DESI": {
         "colour": "k",
         "ls": "--",
         "lw": 1.5,
         "filled": False,
-        "label": "CMB 2030s+DESI"
+        "label": "CMB 2030s+DESI",
     },
 }
 
@@ -175,13 +229,14 @@ style_dict = {
 alpha_unity_style_dict = {
     "Starobinsky $R^2$": {
         "color": "k",
-        "s": 50,
-        "marker": "s"
+        "lw": 1.2,
+        "ms": 6,
+        "marker": "s",
     },
     "Higgs": {
         "color": "w",
         "edgecolor": "k",
         "s": 70,
-        "marker": "o"
-    }
+        "marker": "o",
+    },
 }

@@ -59,7 +59,7 @@ g.add_legend(["SPA+BK", "SPA+BK+DESI"], fontsize=10)
 
 # Axis setup
 ax.set_ylim((0, 0.1))
-ax.set_xlim((0.9575, 1.0))
+ax.set_xlim((0.9515, 1.0))
 ax.xaxis.set_minor_locator(AutoMinorLocator())
 ax.yaxis.set_minor_locator(AutoMinorLocator())
 ax.set_ylabel("Tensor-to-scalar ratio $r$")

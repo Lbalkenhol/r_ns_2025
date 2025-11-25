@@ -14,11 +14,15 @@ from getdist import plots, loadMCSamples
 from plot_style import style_dict
 from theory_models import (
     add_concave_convex_divide,
+    add_concave_convex_labels,
     add_efold_shading,
     add_alpha_unity_model_markers,
     add_polynomial_potentials,
 )
-from legend_utils import create_dummy_plot_elements_for_legend
+from legend_utils import (
+    create_dummy_plot_elements_for_legend,
+    add_model_handlers_to_legend,
+)
 
 rgw_str = "r"
 ns_str = "n_s"
@@ -163,7 +167,7 @@ use_log_scale = st.sidebar.checkbox("Log scale for $r$", value=False)
 
 # Initialize session state if not exists
 if "ns_min" not in st.session_state:
-    st.session_state.ns_min = 0.9575
+    st.session_state.ns_min = 0.9515
 if "ns_max" not in st.session_state:
     st.session_state.ns_max = 1.0
 if "r_min" not in st.session_state:
@@ -221,7 +225,7 @@ r_max = st.sidebar.number_input(
 
 # Reset button
 if st.sidebar.button("Reset to Default"):
-    st.session_state.ns_min = 0.9575
+    st.session_state.ns_min = 0.9515
     st.session_state.ns_max = 1.0
     if use_log_scale:
         st.session_state.r_min = 1e-3
@@ -323,6 +327,7 @@ if show_custom:
 # Theory elements
 st.sidebar.header("Theory Elements")
 show_divide = st.sidebar.checkbox("Concave/Convex divide", value=False)
+show_labels = st.sidebar.checkbox("Concave/Convex labels", value=False)
 show_efold = st.sidebar.checkbox(
     f"Number of e-folds ${N_star_str}$ shading", value=True
 )
@@ -342,6 +347,7 @@ st.sidebar.markdown(
     "$$\\small V(\phi) \propto \phi^{n},\, n=1, \\frac{2}{3}, \\frac{1}{3}$$"
 )
 show_starobinsky = st.sidebar.checkbox("Starobinsky $R^2$", value=False)
+st.sidebar.markdown("$$\\small 42 \leq N_\star \leq 52$$")
 show_higgs = st.sidebar.checkbox("Higgs inflation", value=False)
 
 # Custom model marker
@@ -416,19 +422,20 @@ if show_efold:
 if show_divide:
     add_concave_convex_divide(ax, ns_range=(ns_min, ns_max))
 
+if show_labels:
+    add_concave_convex_labels(ax)
+
 # Add polynomial potentials
-poly_handle = None
-poly_label = None
 if show_polynomial:
-    poly_handle, poly_label = add_polynomial_potentials(
+    add_polynomial_potentials(
         ax,
         p_values=[1 / 3, 2 / 3, 1],
         N_range=(N_min, N_max),
         add_labels=False,  # Don't add the on-panel text labels
-        return_handles=True,
+        return_handles=False,
     )
 
-# Add model markers
+# Add model markers - in desired legend order
 models_to_show = []
 if show_starobinsky:
     models_to_show.append("Starobinsky $R^2$")
@@ -438,7 +445,7 @@ if show_higgs:
 if len(models_to_show) > 0:
     add_alpha_unity_model_markers(ax, models=models_to_show, return_handles=False)
 
-# Add custom model marker
+# Add custom model marker (will appear last)
 if show_custom_marker:
     ax.scatter(
         custom_marker_ns,
@@ -452,89 +459,126 @@ if show_custom_marker:
         label=custom_marker_label,
     )
 
-# Add legend with controlled order
+# Add legend using the automatic handler function
+# Add legend using the automatic handler function
 if len(all_dat) > 0 or len(models_to_show) > 0 or show_polynomial or show_custom_marker:
     # Determine legend location based on log scale
     legend_loc = "lower right" if use_log_scale else "upper right"
 
-    # Create dummy legend elements for data contours
     # Check if we have both FC and FC_DESI for special two-line legend entry
     if show_fc and show_fc_desi:
+        # Use the advanced legend with two-line handler
         legend_handles, legend_labels, handler_map = (
             create_dummy_plot_elements_for_legend(all_dat, True)
         )
 
-        # Get all handles and labels from the plot
+        # Get model handles from the plot and organize in desired order
         plot_handles, plot_labels = ax.get_legend_handles_labels()
 
-        # Add polynomial and model handles if present
-        if show_polynomial and poly_handle is not None:
-            legend_handles.append(poly_handle)
-            legend_labels.append(poly_label)
+        # Separate polynomial, Starobinsky, Higgs, and custom markers
+        poly_handles = []
+        poly_labels = []
+        staro_handles = []
+        staro_labels = []
+        higgs_handles = []
+        higgs_labels = []
+        custom_handles = []
+        custom_labels = []
 
-        # Add model markers (including custom)
         for h, l in zip(plot_handles, plot_labels):
-            if l in models_to_show or (show_custom_marker and l == custom_marker_label):
-                legend_handles.append(h)
-                legend_labels.append(l)
+            # Skip data constraint labels (already in legend_handles)
+            if l in [style_dict[dat]["label"] for dat in all_dat if dat in style_dict]:
+                continue
 
-        # Define desired order (with CMB 2030s instead of separate FC/FC_DESI)
-        order_dict = {
-            "SPA+BK": 0,
-            "SPA+BK+DESI": 1,
-            "CMB 2030s": 2,  # Combined FC and FC_DESI
-            custom_label if show_custom else "Custom Forecast": 3,
-            r"$V(\phi) \propto \phi^{n},\, n=1, \sfrac{2}{3}, \sfrac{1}{3}$": 4,
-            "Starobinsky $R^2$": 5,
-            "Higgs": 6,
-            custom_marker_label if show_custom_marker else "Custom Model": 7,
-        }
+            # Categorize by label
+            if l.startswith("$V(\\phi)"):  # Polynomial potentials
+                poly_handles.append(h)
+                poly_labels.append(l)
+            elif l == "Starobinsky $R^2$":
+                staro_handles.append(h)
+                staro_labels.append(l)
+            elif l == "Higgs":
+                higgs_handles.append(h)
+                higgs_labels.append(l)
+            else:  # Custom marker
+                custom_handles.append(h)
+                custom_labels.append(l)
 
-        # Sort handles and labels by desired order
-        sorted_pairs = sorted(
-            zip(legend_handles, legend_labels), key=lambda x: order_dict.get(x[1], 999)
-        )
-        handles_sorted, labels_sorted = zip(*sorted_pairs) if sorted_pairs else ([], [])
+        # Add in desired order: data, polynomial, Starobinsky, Higgs, custom
+        legend_handles.extend(poly_handles)
+        legend_labels.extend(poly_labels)
+        legend_handles.extend(staro_handles)
+        legend_labels.extend(staro_labels)
+        legend_handles.extend(higgs_handles)
+        legend_labels.extend(higgs_labels)
+        legend_handles.extend(custom_handles)
+        legend_labels.extend(custom_labels)
 
-        # Create legend with sorted order and handler map
-        ax.legend(
-            handles_sorted,
-            labels_sorted,
+        # Use the automatic handler function
+        add_model_handlers_to_legend(
+            ax,
+            handles=legend_handles,
+            labels=legend_labels,
             handler_map=handler_map,
             loc=legend_loc,
             fontsize=legend_fontsize,
             handlelength=1.5,
         )
+
     else:
         # Standard legend without two-line handler
-        create_dummy_plot_elements_for_legend(all_dat)
+        # Create dummy elements for data constraints (adds them to the plot)
+        if len(all_dat) > 0:
+            create_dummy_plot_elements_for_legend(all_dat, return_entries=False)
 
-        # Get all handles and labels
-        handles, labels = ax.get_legend_handles_labels()
+        # Now get ALL handles from the plot (including the dummy elements we just created)
+        plot_handles, plot_labels = ax.get_legend_handles_labels()
 
-        # Define desired order
-        order_dict = {
-            "SPA+BK": 0,
-            "SPA+BK+DESI": 1,
-            "CMB 2030s": 2,
-            "CMB 2030s+DESI": 3,
-            custom_label if show_custom else "Custom Forecast": 4,
-            r"$V(\phi) \propto \phi^{n},\, n=1, \sfrac{2}{3}, \sfrac{1}{3}$": 5,
-            "Starobinsky $R^2$": 6,
-            "Higgs": 7,
-            custom_marker_label if show_custom_marker else "Custom Model": 8,
-        }
+        # Separate elements by type in desired order
+        data_handles = []
+        data_labels = []
+        poly_handles = []
+        poly_labels = []
+        staro_handles = []
+        staro_labels = []
+        higgs_handles = []
+        higgs_labels = []
+        custom_handles = []
+        custom_labels = []
 
-        # Sort handles and labels by desired order
-        sorted_pairs = sorted(
-            zip(handles, labels), key=lambda x: order_dict.get(x[1], 999)
+        for h, l in zip(plot_handles, plot_labels):
+            # Categorize each element
+            if l in [style_dict[dat]["label"] for dat in all_dat if dat in style_dict]:
+                # Data constraints
+                data_handles.append(h)
+                data_labels.append(l)
+            elif l.startswith("$V(\\phi)"):  # Polynomial potentials
+                poly_handles.append(h)
+                poly_labels.append(l)
+            elif l == "Starobinsky $R^2$":
+                staro_handles.append(h)
+                staro_labels.append(l)
+            elif l == "Higgs":
+                higgs_handles.append(h)
+                higgs_labels.append(l)
+            else:  # Custom marker
+                custom_handles.append(h)
+                custom_labels.append(l)
+
+        # Combine in desired order: data, polynomial, Starobinsky, Higgs, custom
+        all_handles = (
+            data_handles + poly_handles + staro_handles + higgs_handles + custom_handles
         )
-        handles_sorted, labels_sorted = zip(*sorted_pairs) if sorted_pairs else ([], [])
+        all_labels = (
+            data_labels + poly_labels + staro_labels + higgs_labels + custom_labels
+        )
 
-        # Create legend with sorted order
-        ax.legend(
-            handles_sorted,
-            labels_sorted,
+        # Use the automatic handler function (will detect Starobinsky and add handler)
+        add_model_handlers_to_legend(
+            ax,
+            handles=all_handles,
+            labels=all_labels,
+            handler_map=None,  # No pre-existing handler_map
             loc=legend_loc,
             fontsize=legend_fontsize,
             handlelength=1.5,
@@ -604,11 +648,12 @@ from getdist import plots, loadMCSamples
 from plot_style import style_dict
 from theory_models import (
     add_concave_convex_divide, 
+    add_concave_convex_labels,
     add_efold_shading,
     add_alpha_unity_model_markers,
     add_polynomial_potentials
 )
-from legend_utils import create_dummy_plot_elements_for_legend
+from legend_utils import create_dummy_plot_elements_for_legend, add_model_handlers_to_legend
 
 # ============================================================================
 # Load Data
@@ -679,6 +724,8 @@ style_dict["CUSTOM"] = {{
 # Create Plot
 # ============================================================================
 
+plt.close()
+
 # Create GetDist plotter
 g = plots.get_single_plotter(width_inch="""
 
@@ -730,6 +777,12 @@ add_concave_convex_divide(ax, ns_range=({ns_min}, {ns_max}))
 
 """
 
+    if show_labels:
+        code += """# Add concave/convex labels
+add_concave_convex_labels(ax)
+
+"""
+
     if show_polynomial:
         code += f"""# Add polynomial potentials
 add_polynomial_potentials(ax, p_values=[1/3, 2/3, 1], N_range=({N_min}, {N_max}),
@@ -770,17 +823,19 @@ ax.scatter({custom_marker_ns}, {custom_marker_r},
 legend_handles, legend_labels, handler_map = create_dummy_plot_elements_for_legend(all_dat, True)
 plot_handles, plot_labels = ax.get_legend_handles_labels()
 for h, l in zip(plot_handles, plot_labels):
-    legend_handles.append(h)
-    legend_labels.append(l)
+    if l not in [style_dict[dat]["label"] for dat in all_dat if dat in style_dict]:
+        legend_handles.append(h)
+        legend_labels.append(l)
 
-ax.legend(legend_handles, legend_labels, handler_map=handler_map,
-          loc="{legend_loc}", fontsize={legend_fontsize}, handlelength=1.5)
+add_model_handlers_to_legend(ax, handles=legend_handles, labels=legend_labels,
+                             handler_map=handler_map, loc="{legend_loc}",
+                             fontsize={legend_fontsize}, handlelength=1.5)
 
 """
     else:
         code += f"""# Create legend
 create_dummy_plot_elements_for_legend(all_dat)
-ax.legend(loc="{legend_loc}", fontsize={legend_fontsize}, handlelength=1.5)
+add_model_handlers_to_legend(ax, loc="{legend_loc}", fontsize={legend_fontsize}, handlelength=1.5)
 
 """
 
