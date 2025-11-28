@@ -58,7 +58,7 @@ The `chains/` folder contains MCMC chains and best-fit points obtained using [Co
   - Planck-based $\tau_{\rm reio}$ prior
   - BAO: DESI DR2
 
-Please see the paper for more details. All chains have had burn-in removed.
+Please see the paper for more details. All chains have had 30% burn-in removed and eight parallel chains have been concatenated.
 
 ## Repository Structure
 
