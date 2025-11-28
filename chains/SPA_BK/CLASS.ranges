@@ -1,0 +1,55 @@
+                     r    0.0000000E+00    3.0000000E+00
+               omega_b    5.0000000E-03    1.0000000E-01
+             omega_cdm    1.0000000E-03    9.9000000E-01
+           theta_s_1e2    5.0000000E-01    1.0000000E+01
+                  logA    1.6100000E+00    3.9100000E+00
+                   n_s    8.0000000E-01    1.2000000E+00
+              tau_reio                N                N
+                    H0                N                N
+              omegamh2                N                N
+                     A                N                N
+                   A_s                N                N
+          Omega_Lambda                N                N
+               Omega_m                N                N
+                   YHe                N                N
+                   age                N                N
+                 clamp                N                N
+               rs_drag                N                N
+                  s8h5                N                N
+           s8omegamp25                N                N
+            s8omegamp5                N                N
+                sigma8                N                N
+                   S_8                N                N
+                  Ecal    8.0000000E-01    1.2000000E+00
+                  Tcal                N                N
+                BBdust    0.0000000E+00    1.5000000E+01
+                BBsync    0.0000000E+00    5.0000000E+01
+           BBalphadust   -1.0000000E+00    0.0000000E+00
+           BBalphasync   -1.0000000E+00    0.0000000E+00
+            BBbetadust    8.0000000E-01    2.4000000E+00
+            BBbetasync                N                N
+        BBdustsynccorr   -1.0000000E+00    1.0000000E+00
+           EEtoBB_dust    2.0000000E+00    2.0000000E+00
+           EEtoBB_sync    2.0000000E+00    2.0000000E+00
+               BBTdust    1.9600000E+01    1.9600000E+01
+            delta_dust    1.0000000E+00    1.0000000E+00
+            delta_sync    1.0000000E+00    1.0000000E+00
+            gamma_corr    0.0000000E+00    0.0000000E+00
+              gamma_95    0.0000000E+00    0.0000000E+00
+             gamma_150    0.0000000E+00    0.0000000E+00
+             gamma_220    0.0000000E+00    0.0000000E+00
+              A_planck                N                N
+                 A_act    5.0000000E-01    1.5000000E+00
+                 P_act    9.0000000E-01    1.1000000E+00
+             chi2__CMB                N                N
+         minuslogprior                N                N
+      minuslogprior__0                N                N
+minuslogprior__cal_dip_prior                N                N
+                  chi2                N                N
+ chi2__bicep_keck_2018                N                N
+      chi2__S1920_lite                N                N
+chi2__muse3glike.cobaya.spt3g_2yr_delensed_ee_optimal_pp_muse                N                N
+chi2__act_dr6_lenslike.ACTDR6LensLike                N                N
+chi2__planck_2018_lowl.TT                N                N
+chi2__act_dr6_cmbonly.PlanckActCut                N                N
+chi2__act_dr6_cmbonly.ACTDR6CMBonly                N                N

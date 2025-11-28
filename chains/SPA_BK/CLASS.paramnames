@@ -1,0 +1,48 @@
+r	r_{0.05}
+omega_b	\Omega_\mathrm{b} h^2
+omega_cdm	\Omega_\mathrm{c} h^2
+theta_s_1e2	100\theta_\mathrm{s}
+logA	\log(10^{10} A_\mathrm{s})
+n_s	n_\mathrm{s}
+tau_reio	\tau_\mathrm{reio}
+Ecal	E_{\rm cal}
+Tcal	T_{\rm cal}
+BBdust	A_{B,\mathrm{dust}}
+BBsync	A_{B,\mathrm{sync}}
+BBalphadust	\alpha_{B,\mathrm{dust}}
+BBalphasync	\alpha_{B,\mathrm{sync}}
+BBbetadust	\beta_{B,\mathrm{dust}}
+BBbetasync	\beta_{B,\mathrm{sync}}
+BBdustsynccorr	\epsilon_{\mathrm{dust,sync}}
+A_act	A_{\rm ACT}
+P_act	p_{\rm ACT}
+H0*	H_0
+omegamh2*	\Omega_\mathrm{m} h^2
+A*	10^9 A_\mathrm{s}
+A_s*	A_\mathrm{s}
+Omega_Lambda*	\Omega_\Lambda
+Omega_m*	\Omega_\mathrm{m}
+YHe*	Y_\mathrm{P}
+age*	{\rm{Age}}/\mathrm{Gyr}
+clamp*	10^9 A_\mathrm{s} e^{-2\tau}
+rs_drag*	r_\mathrm{drag}
+s8h5*	\sigma_8/h^{0.5}
+s8omegamp25*	\sigma_8 \Omega_\mathrm{m}^{0.25}
+s8omegamp5*	\sigma_8 \Omega_\mathrm{m}^{0.5}
+sigma8*	\sigma_8
+S_8*	$S_8$
+A_planck*	A_{\rm planck}
+chi2__CMB*	\chi^2_\mathrm{CMB}
+minuslogprior*	-\log\pi
+minuslogprior__0*	-\log\pi_\mathrm{0}
+minuslogprior__cal_dip_prior*	-\log\pi_\mathrm{cal\ dip\ prior}
+chi2*	\chi^2
+chi2__bicep_keck_2018*	\chi^2_\mathrm{bicep\ keck\ 2018}
+chi2__S1920_lite*	\chi^2_\mathrm{S1920\ lite}
+chi2__muse3glike.cobaya.spt3g_2yr_delensed_ee_optimal_pp_muse*	\chi^2_\mathrm{muse3glike.cobaya.spt3g\ 2yr\ delensed\ ee\ optimal\ pp\ muse}
+chi2__act_dr6_lenslike.ACTDR6LensLike*	\chi^2_\mathrm{act\ dr6\ lenslike.ACTDR6LensLike}
+chi2__planck_2018_lowl.TT*	\chi^2_\mathrm{planck\ 2018\ lowl.TT}
+chi2__act_dr6_cmbonly.PlanckActCut*	\chi^2_\mathrm{act\ dr6\ cmbonly.PlanckActCut}
+chi2__act_dr6_cmbonly.ACTDR6CMBonly*	\chi^2_\mathrm{act\ dr6\ cmbonly.ACTDR6CMBonly}
+rdh*	h r_d
+ommrd2*	\Omega_{m} (h r_d/147.1\,\mathrm{Mpc})^2
