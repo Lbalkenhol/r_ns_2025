@@ -405,7 +405,7 @@ g.settings.legend_frame = False
 if len(all_dat) > 0:
     g.plot_2d(
         [chains[dat] for dat in all_dat],
-        ["ns", "r"],
+        ["n_s", "r"],
         colors=[style_dict[dat]["colour"] for dat in all_dat],
         ls=[style_dict[dat]["ls"] for dat in all_dat],
         lws=[style_dict[dat]["lw"] for dat in all_dat],
@@ -753,7 +753,7 @@ all_dat = ["""
         + """]
 
 g.plot_2d([chains[dat] for dat in all_dat],
-          ["ns", "r"],
+          ["n_s", "r"],
           colors=[style_dict[dat]["colour"] for dat in all_dat],
           ls=[style_dict[dat]["ls"] for dat in all_dat],
           lws=[style_dict[dat]["lw"] for dat in all_dat],

@@ -7,9 +7,12 @@ from plot_style import (
     style_dict,
     HandlerTwoLines,
     HandlerLineWithEndMarkers,
+    HandlerMonomial,
+    HandlerLineMultiline,
+    HandlerScatterMultiline,
     alpha_unity_style_dict,
 )
-from theory_models import ALPHA_UNITY_MODELS
+from theory_models import ALPHA_UNITY_MODELS, get_alpha_unity_label
 import numpy as np
 
 
@@ -49,6 +52,9 @@ def create_dummy_plot_elements_for_legend(all_dat, return_entries=False):
     has_forecasts = "FC" in all_dat and "FC_DESI" in all_dat
 
     for dat in all_dat:
+        if dat not in style_dict:
+            continue
+
         # Special handling for forecast combination
         if has_forecasts:
             if dat == "FC":
@@ -89,6 +95,87 @@ def create_dummy_plot_elements_for_legend(all_dat, return_entries=False):
     return None
 
 
+def add_monomial_legend_entry(
+    legend_handles, legend_labels, handler_map, N_range=(47, 57), yoffset=0.0
+):
+    """
+    Add a monomial potential legend entry with custom handler.
+
+    Parameters
+    ----------
+    legend_handles : list
+        List of legend handles to append to
+    legend_labels : list
+        List of legend labels to append to
+    handler_map : dict
+        Handler map to update
+    N_range : tuple
+        (N_min, N_max) e-fold range for label
+    yoffset : float
+        Vertical offset for multiline entries
+    """
+    label = (
+        r"$V(\phi) \propto \phi^{n},\, n=1, \sfrac{2}{3}, \sfrac{1}{3}$"
+        + f"\n(${N_range[0]}\\leq\\! N_\\star\\!\\leq {N_range[1]}$)"
+    )
+
+    dummy_handle = plt.Line2D([], [], color="k")
+    legend_handles.append(dummy_handle)
+    legend_labels.append(label)
+    handler_map[dummy_handle] = HandlerMonomial(
+        facecolor="0.8",
+        edgecolor="0.6",
+        linecolor="r",
+        linewidth=0.8,
+        yoffset=yoffset,
+    )
+
+
+def add_alpha_attractor_legend_entry(
+    legend_handles, legend_labels, handler_map, N_star=None, k=2, yoffset=0.0
+):
+    """
+    Add a polynomial alpha-attractor legend entry with custom handler.
+
+    Parameters
+    ----------
+    legend_handles : list
+        List of legend handles to append to
+    legend_labels : list
+        List of legend labels to append to
+    handler_map : dict
+        Handler map to update
+    N_star : int or array-like, optional
+        Single N* value or iterable of N* values. Default is [47, 57]
+    k : int
+        Power in the potential
+    yoffset : float
+        Vertical offset for multiline entries (auto-set to 0 for >2 N* values)
+    """
+    from theory_models import get_polynomial_alpha_attractor_label
+
+    # Handle default and convert to array
+    if N_star is None:
+        N_star = [47, 57]
+    N_star = np.atleast_1d(N_star)
+
+    label = get_polynomial_alpha_attractor_label(N_star, k)
+
+    # For more than 2 N* values, label is single line so no yoffset needed
+    if len(N_star) > 2:
+        yoffset = 0.0
+
+    dummy_handle = plt.Line2D([], [], color="k")
+    legend_handles.append(dummy_handle)
+    legend_labels.append(label)
+    handler_map[dummy_handle] = HandlerLineMultiline(
+        linestyle=":",
+        linewidth=1.0,
+        color="k",
+        yoffset=yoffset,
+    )
+
+
 def add_model_handlers_to_legend(
     ax, handles=None, labels=None, handler_map=None, **legend_kwargs
 ):
@@ -96,8 +183,8 @@ def add_model_handlers_to_legend(
     Add legend with automatic handling of special model entries (Starobinsky, etc.).
 
     This function gets all handles and labels from the current axes (or uses provided ones),
-    identifies models that need special handlers (like Starobinsky R²), and creates a legend
-    with the appropriate custom handlers.
+    identifies models that need special handlers (like Starobinsky R² with N* range),
+    and creates a legend with the appropriate custom handlers.
 
     Parameters
     ----------
@@ -127,18 +214,47 @@ def add_model_handlers_to_legend(
 
     # Check each label and add appropriate handler if needed
     for handle, label in zip(handles, labels):
-        # Check if this is a model with N* range (use ALPHA_UNITY_MODELS as source of truth)
-        if label in ALPHA_UNITY_MODELS and label in alpha_unity_style_dict:
-            N_star = np.atleast_1d(ALPHA_UNITY_MODELS[label])
-            if len(N_star) > 1:
-                # This model needs the line-with-end-markers handler
-                model_style = alpha_unity_style_dict[label]
-                handler_map[handle] = HandlerLineWithEndMarkers(
-                    marker=model_style["marker"],
-                    markersize=model_style["ms"] - 1,
-                    color=model_style["color"],
-                    linewidth=model_style["lw"],
-                )
+        # Check if this is an alpha-unity model with N* range
+        for model_name in ALPHA_UNITY_MODELS:
+            model_label = get_alpha_unity_label(model_name)
+            if label == model_label and model_name in alpha_unity_style_dict:
+                N_star = np.atleast_1d(ALPHA_UNITY_MODELS[model_name])
+                if len(N_star) > 1:
+                    # This model needs the line-with-end-markers handler
+                    model_style = alpha_unity_style_dict[model_name]
+                    extra_args = {}
+                    if "markerfacecolor" in model_style:
+                        extra_args["markerfacecolor"] = model_style["markerfacecolor"]
+                    if "markeredgecolor" in model_style:
+                        extra_args["markeredgecolor"] = model_style["markeredgecolor"]
+                    handler_map[handle] = HandlerLineWithEndMarkers(
+                        marker=model_style["marker"],
+                        markersize=model_style["ms"] - 1,
+                        color=model_style["color"],
+                        linewidth=model_style["lw"],
+                        **extra_args,
+                    )
+                break
+
+        # Check for multiline scatter labels (containing newlines)
+        if "\n" in label and handle not in handler_map:
+            # Check if it's a scatter handle
+            if hasattr(handle, "get_paths"):  # PathCollection from scatter
+                # Get scatter properties if available
+                try:
+                    facecolors = handle.get_facecolors()
+                    edgecolors = handle.get_edgecolors()
+                    sizes = handle.get_sizes()
+
+                    handler_map[handle] = HandlerScatterMultiline(
+                        marker=handle.get_paths()[0] if handle.get_paths() else "o",
+                        scatter_size=sizes[0] if len(sizes) > 0 else 50,
+                        color=facecolors[0] if len(facecolors) > 0 else "k",
+                        edgecolor=edgecolors[0] if len(edgecolors) > 0 else "k",
+                        yoffset=5.25,
+                    )
+                except:
+                    pass
 
     # Create legend with handler_map
     legend = ax.legend(

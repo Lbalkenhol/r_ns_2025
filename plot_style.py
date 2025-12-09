@@ -6,13 +6,15 @@ Contains matplotlib settings, style dictionaries, and custom legend handlers.
 import matplotlib.pyplot as plt
 from matplotlib.legend_handler import HandlerBase
 from matplotlib.lines import Line2D
+from matplotlib.patches import Rectangle
 from matplotlib import rc
 from cycler import cycler
 import seaborn as sns
+import numpy as np
 
 
 # ============================================================================
-# Custom Legend Handler
+# Custom Legend Handlers
 # ============================================================================
 
 
@@ -62,11 +64,21 @@ class HandlerTwoLines(HandlerBase):
 class HandlerLineWithEndMarkers(HandlerBase):
     """Custom matplotlib legend handler for line with markers at both ends."""
 
-    def __init__(self, marker="s", markersize=6, color="k", linewidth=1.2):
+    def __init__(
+        self,
+        marker="s",
+        markersize=6,
+        color="k",
+        linewidth=1.2,
+        markerfacecolor=None,
+        markeredgecolor=None,
+    ):
         self.marker = marker
         self.markersize = markersize
         self.color = color
         self.linewidth = linewidth
+        self.markerfacecolor = markerfacecolor if markerfacecolor is not None else color
+        self.markeredgecolor = markeredgecolor if markeredgecolor is not None else color
         super().__init__()
 
     def create_artists(
@@ -96,6 +108,8 @@ class HandlerLineWithEndMarkers(HandlerBase):
             color=self.color,
             linestyle="",
             transform=trans,
+            markerfacecolor=self.markerfacecolor,
+            markeredgecolor=self.markeredgecolor,
         )
 
         marker_right = Line2D(
@@ -106,9 +120,137 @@ class HandlerLineWithEndMarkers(HandlerBase):
             color=self.color,
             linestyle="",
             transform=trans,
+            markerfacecolor=self.markerfacecolor,
+            markeredgecolor=self.markeredgecolor,
         )
 
         return [line, marker_left, marker_right]
+
+
+class HandlerMonomial(HandlerBase):
+    """Custom legend handler for monomial potentials with e-fold shading."""
+
+    def __init__(
+        self,
+        facecolor="0.8",
+        edgecolor="0.6",
+        linecolor="r",
+        linewidth=1.2,
+        yoffset=0.0,
+    ):
+        self.facecolor = facecolor
+        self.edgecolor = edgecolor
+        self.linecolor = linecolor
+        self.linewidth = linewidth
+        self.yoffset = yoffset
+        super().__init__()
+
+    def create_artists(
+        self, legend, orig_handle, xdescent, ydescent, width, height, fontsize, trans
+    ):
+        # Apply yoffset to all y-positions
+        ydescent_adjusted = ydescent + self.yoffset
+
+        # Create grey rectangle (filled)
+        rect_fill = Rectangle(
+            (xdescent, ydescent_adjusted),
+            width,
+            height,
+            facecolor=self.facecolor,
+            edgecolor="none",
+            linewidth=0,
+            transform=trans,
+        )
+
+        # Create diagonal red line from top-left to bottom-right
+        x_start = xdescent + 0.025 * width
+        y_start = ydescent_adjusted + 0.94 * height
+        x_end = xdescent + 0.98 * width
+        y_end = ydescent_adjusted + 0.037 * height
+
+        line = Line2D(
+            [x_start, x_end],
+            [y_start, y_end],
+            color=self.linecolor,
+            linewidth=self.linewidth,
+            transform=trans,
+        )
+
+        # Create rectangle edge on top
+        rect_edge = Rectangle(
+            (xdescent, ydescent_adjusted),
+            width,
+            height,
+            facecolor="none",
+            edgecolor=self.edgecolor,
+            linewidth=0.6,
+            transform=trans,
+        )
+
+        return [rect_fill, line, rect_edge]
+
+
+class HandlerLineMultiline(HandlerBase):
+    """Custom legend handler for line entries in multiline labels."""
+
+    def __init__(self, linestyle=":", linewidth=1.0, color="k", yoffset=0.0):
+        self.linestyle = linestyle
+        self.linewidth = linewidth
+        self.color = color
+        self.yoffset = yoffset
+        super().__init__()
+
+    def create_artists(
+        self, legend, orig_handle, xdescent, ydescent, width, height, fontsize, trans
+    ):
+        # Create line at center with optional vertical offset
+        y_center = ydescent + height * 0.5 + self.yoffset
+
+        line = Line2D(
+            [xdescent, xdescent + width],
+            [y_center, y_center],
+            linestyle=self.linestyle,
+            linewidth=self.linewidth,
+            color=self.color,
+            transform=trans,
+        )
+
+        return [line]
+
+
+class HandlerScatterMultiline(HandlerBase):
+    """Custom legend handler for scatter entries in multiline labels."""
+
+    def __init__(
+        self, marker="D", scatter_size=50, color="k", edgecolor="k", yoffset=0.0
+    ):
+        self.marker = marker
+        # Convert scatter size (points²) to Line2D markersize (points)
+        self.markersize = np.sqrt(scatter_size)
+        self.color = color
+        self.edgecolor = edgecolor
+        self.yoffset = yoffset
+        super().__init__()
+
+    def create_artists(
+        self, legend, orig_handle, xdescent, ydescent, width, height, fontsize, trans
+    ):
+        # Create marker at center with optional vertical offset
+        x_center = xdescent + width * 0.5
+        y_center = ydescent + height * 0.5 + self.yoffset
+
+        marker = Line2D(
+            [x_center],
+            [y_center],
+            marker=self.marker,
+            markersize=self.markersize,
+            markerfacecolor=self.color,
+            markeredgecolor=self.edgecolor,
+            linestyle="",
+            transform=trans,
+        )
+
+        return [marker]
 
 
 # ============================================================================
@@ -226,16 +368,21 @@ style_dict = {
 }
 
 # Style settings for specific inflation models
+# N* values can be single values or [N_min, N_max] ranges
 alpha_unity_style_dict = {
     "Starobinsky $R^2$": {
         "color": "k",
+        "edgecolor": "k",
         "lw": 1.2,
         "ms": 6,
+        "s": 60,
         "marker": "s",
     },
     "Higgs": {
         "color": "w",
         "edgecolor": "k",
+        "lw": 1.2,
+        "ms": 7,
         "s": 70,
         "marker": "o",
     },

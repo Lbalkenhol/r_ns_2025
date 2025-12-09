@@ -43,15 +43,15 @@ ax = plt.gca()
 all_dat = ["SPA_BK", "SPA_BK_DESI"]
 g.plot_2d(
     [chains[dat] for dat in all_dat],
-    ["ns", "r"],
+    ["n_s", "r"],
     colors=[style_dict[dat]["colour"] for dat in all_dat],
     ls=[style_dict[dat]["ls"] for dat in all_dat],
     lws=[style_dict[dat]["lw"] for dat in all_dat],
     filled=[style_dict[dat]["filled"] for dat in all_dat],
 )
 
-# Add theory elements
-add_efold_shading(ax, N_range=(50, 60), ns_range=(0.96, 1.0))
+# Add theory elements (using publication N* range: 47-57)
+add_efold_shading(ax, N_range=(47, 57), ns_range=(0.96, 1.0))
 add_concave_convex_divide(ax, ns_range=(0.96, 1.0))
 
 # Legend
@@ -59,7 +59,7 @@ g.add_legend(["SPA+BK", "SPA+BK+DESI"], fontsize=10)
 
 # Axis setup
 ax.set_ylim((0, 0.1))
-ax.set_xlim((0.9515, 1.0))
+ax.set_xlim((0.954, 1.0))
 ax.xaxis.set_minor_locator(AutoMinorLocator())
 ax.yaxis.set_minor_locator(AutoMinorLocator())
 ax.set_ylabel("Tensor-to-scalar ratio $r$")

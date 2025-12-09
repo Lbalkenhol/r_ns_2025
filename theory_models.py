@@ -3,6 +3,7 @@ Theory predictions for inflation models in the r-ns plane.
 Contains functions for polynomial potentials, alpha-unity models, and plot elements.
 """
 
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from plot_style import alpha_unity_style_dict
@@ -10,7 +11,7 @@ from plot_style import alpha_unity_style_dict
 
 # ============================================================================
 # Helper Functions for r-ns Relations
-# # Taken from BK18 plotting script at http://bicepkeck.org/bk18_2021_release.html
+# Taken from BK18 plotting script at http://bicepkeck.org/bk18_2021_release.html
 # ============================================================================
 
 
@@ -98,9 +99,10 @@ def r_from_N_star_ns(N_star, ns):
 
 # Model parameters: N* values for each model
 # These can be single values or [N_min, N_max] ranges
+# Publication values: Starobinsky N*=51, Higgs N*=55
 ALPHA_UNITY_MODELS = {
-    "Starobinsky $R^2$": [42, 52],  # Range of e-folds
-    "Higgs": 57,  # Single value
+    "Starobinsky $R^2$": 51,  # Single value for publication
+    "Higgs": 55,  # Single value for publication
 }
 
 
@@ -136,6 +138,86 @@ def get_alpha_unity_model_prediction(model_name):
     if len(N) == 1:
         return float(ns[0]), float(r[0])
     return ns, r
+
+
+def get_alpha_unity_label(model_name):
+    """
+    Get the legend label for an alpha-unity model including N* information.
+
+    Parameters
+    ----------
+    model_name : str
+        Name of the model (must be in ALPHA_UNITY_MODELS)
+
+    Returns
+    -------
+    str
+        Label with N* value(s) in parentheses
+    """
+    if model_name not in ALPHA_UNITY_MODELS:
+        return model_name
+
+    N_star = np.atleast_1d(ALPHA_UNITY_MODELS[model_name])
+    if len(N_star) > 1:
+        return f"{model_name} (${N_star[0]}\\leq N_\\star\\leq {N_star[1]}$)"
+    else:
+        return f"{model_name} ($N_\\star={N_star[0]}$)"
+
+
+# ============================================================================
+# Polynomial Alpha-Attractor Functions
+# ============================================================================
+
+
+def load_polynomial_alpha_attractor_line(
+    N_star, k=2, data_dir="polynomial_alpha_attractor_lines"
+):
+    """
+    Load precomputed polynomial alpha-attractor line from file.
+
+    Parameters
+    ----------
+    N_star : int
+        Number of e-folds
+    k : int
+        Power in the potential (default: 2)
+    data_dir : str
+        Directory containing the data files
+
+    Returns
+    -------
+    tuple
+        (ns_array, r_array) for the alpha-attractor line
+    """
+    filename = f"polynomial_alpha_attractor_k_{k}_Nstar_{N_star}.txt"
+    filepath = os.path.join(data_dir, filename)
+
+    if not os.path.exists(filepath):
+        raise FileNotFoundError(
+            f"Polynomial alpha-attractor line file not found: {filepath}"
+        )
+
+    data = np.loadtxt(filepath)
+    return data[:, 0], data[:, 1]  # ns, r
+
+
+def get_polynomial_alpha_attractor_label(N_range, k=2):
+    """
+    Get the legend label for polynomial alpha-attractor.
+
+    Parameters
+    ----------
+    N_range : tuple
+        (N_min, N_max) e-fold range
+    k : int
+        Power in the potential
+
+    Returns
+    -------
+    str
+        Formatted label for legend
+    """
+    return f"Polynomial $\\alpha$-attractor\n($k={k},\\, {N_range[0]}\\leq\\! N_\\star\\!\\leq {N_range[1]}$)"
 
 
 # ============================================================================
@@ -251,7 +333,7 @@ def add_concave_convex_labels(
 def add_polynomial_potentials(
     ax,
     p_values=[1 / 3, 2 / 3, 1],
-    N_range=(50, 60),
+    N_range=(47, 57),
     add_labels=True,
     label_offsets=None,
     return_handles=False,
@@ -267,12 +349,12 @@ def add_polynomial_potentials(
     p_values : list
         List of power values to plot
     N_range : tuple
-        (N_min, N_max) e-fold range for each curve
+        (N_min, N_max) e-fold range for each curve (default: 47, 57)
     add_labels : bool
         Whether to add φ^p text labels
     label_offsets : dict or None
         Dictionary mapping p_label strings to [dx, dy] offsets.
-        If None, uses defaults optimized for log scale
+        If None, uses defaults optimized for linear scale
     return_handles : bool
         Whether to return legend handle and label
     **kwargs : dict
@@ -287,21 +369,24 @@ def add_polynomial_potentials(
     default_kwargs = {"ls": "-", "color": "r", "lw": 1.2, "alpha": 1}
     default_kwargs.update(kwargs)
 
-    # Default label offsets (optimized for log scale)
+    # Default label offsets (optimized for linear scale)
     if label_offsets is None:
         label_offsets = {
             "1/3": [0.00025, 0.0025],
-            "2/3": [4 * 0.00025, -2.5 * 0.0025],
-            "": [0.00025, 2 * 0.0025],
+            "2/3": [0.00025, 0.0025],
+            "": [0.00025, 0.0025],
         }
 
     p_labels = {1 / 3: "1/3", 2 / 3: "2/3", 1: ""}
-    legend_label = r"$V(\phi) \propto \phi^{n},\, n=1, \sfrac{2}{3}, \sfrac{1}{3}$"
+    legend_label = (
+        r"$V(\phi) \propto \phi^{n},\, n=1, \sfrac{2}{3}, \sfrac{1}{3}$"
+        + f"\n(${N_range[0]}\\leq\\! N_\\star\\!\\leq {N_range[1]}$)"
+    )
     line_handle = None
 
     for p in p_values:
         p_label = p_labels.get(p, str(p))
-        lbl = legend_label if p == 1 else None
+        lbl = None  # Don't add label directly, use custom handler
 
         ns = np.arange(ns_N(N_range[0], p), ns_N(N_range[1], p), 0.0001)
         line = ax.plot(ns, r_ns(ns, p), label=lbl, **default_kwargs)
@@ -317,7 +402,7 @@ def add_polynomial_potentials(
             ax.text(
                 ns_end + dx,
                 r_end + dy,
-                f"$\phi^{{{p_label}}}$",
+                f"$\\phi^{{{p_label}}}$",
                 color=default_kwargs["color"],
                 ha="left",
             )
@@ -327,7 +412,7 @@ def add_polynomial_potentials(
     return line_handle
 
 
-def add_efold_shading(ax, N_range=(50, 60), ns_range=(0.96, 1.0), **kwargs):
+def add_efold_shading(ax, N_range=(47, 57), ns_range=(0.96, 1.0), **kwargs):
     """
     Add shaded region showing e-fold range for polynomial potentials.
 
@@ -336,7 +421,7 @@ def add_efold_shading(ax, N_range=(50, 60), ns_range=(0.96, 1.0), **kwargs):
     ax : matplotlib.axes.Axes
         Axes to plot on
     N_range : tuple
-        (N_min, N_max) e-fold range
+        (N_min, N_max) e-fold range (default: 47, 57)
     ns_range : tuple
         (ns_min, ns_max) range for shading
     **kwargs : dict
@@ -412,6 +497,9 @@ def add_alpha_unity_model_markers(ax, models=None, return_handles=False):
         this_r = 12 / N_star**2
         this_ns = 1 - 2 / N_star
 
+        # Get label with N* info
+        label = get_alpha_unity_label(model_name)
+
         if len(N_star) > 1:
             # Range: plot as line with markers at endpoints
             plot_kwargs = {
@@ -420,11 +508,11 @@ def add_alpha_unity_model_markers(ax, models=None, return_handles=False):
                 "marker": style_dict["marker"],
                 "ms": style_dict["ms"],
             }
-            line = ax.plot(this_ns, this_r, **plot_kwargs, label=model_name)
+            line = ax.plot(this_ns, this_r, **plot_kwargs, label=label)
 
             if return_handles:
                 handles.append(line[0])
-                labels.append(model_name)
+                labels.append(label)
         else:
             # Single point: plot as scatter
             scatter_kwargs = {
@@ -433,12 +521,103 @@ def add_alpha_unity_model_markers(ax, models=None, return_handles=False):
             if "s" not in scatter_kwargs:
                 scatter_kwargs["s"] = style_dict.get("ms", 6) ** 2
 
-            handle = ax.scatter(this_ns, this_r, **scatter_kwargs, label=model_name)
+            handle = ax.scatter(
+                this_ns, this_r, **scatter_kwargs, label=label, zorder=999999
+            )
 
             if return_handles:
                 handles.append(handle)
-                labels.append(model_name)
+                labels.append(label)
 
     if return_handles:
         return handles, labels
+    return None
+
+
+def get_polynomial_alpha_attractor_label(N_star, k=2):
+    """
+    Get the legend label for polynomial alpha-attractor.
+
+    Parameters
+    ----------
+    N_star : int or array-like
+        Single N* value or iterable of N* values
+    k : int
+        Power in the potential
+
+    Returns
+    -------
+    str
+        Formatted label for legend
+    """
+    N_star = np.atleast_1d(N_star)
+
+    if len(N_star) == 1:
+        # Single value: show exact N*
+        return f"Polynomial $\\alpha$-attractor\n($k={k},\\, N_\\star={N_star[0]}$)"
+    elif len(N_star) == 2:
+        # Two values: show range
+        N_min, N_max = min(N_star), max(N_star)
+        return f"Polynomial $\\alpha$-attractor\n($k={k},\\, {N_min}\\leq\\! N_\\star\\!\\leq {N_max}$)"
+    else:
+        # More than 2: just show model name (single line)
+        return f"Polynomial $\\alpha$-attractor ($k={k}$)"
+
+
+def add_polynomial_alpha_attractor(
+    ax,
+    N_star=None,
+    k=2,
+    return_handles=False,
+    data_dir="polynomial_alpha_attractor_lines",
+    **kwargs,
+):
+    """
+    Add polynomial alpha-attractor lines to plot.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Axes to plot on
+    N_star : int or array-like, optional
+        Single N* value or iterable of N* values. Default is [47, 57]
+    k : int
+        Power in the potential (default: 2)
+    return_handles : bool
+        Whether to return legend handle and label
+    data_dir : str
+        Directory containing the precomputed data files
+    **kwargs : dict
+        Additional arguments passed to ax.plot()
+
+    Returns
+    -------
+    tuple or None
+        If return_handles=True: (handle, label) for legend
+        If return_handles=False: None
+    """
+    # Handle default and convert to array
+    if N_star is None:
+        N_star = [47, 57]
+    N_star = np.atleast_1d(N_star)
+
+    default_kwargs = {"color": "k", "ls": ":", "lw": 1.0}
+    default_kwargs.update(kwargs)
+
+    line_handle = None
+
+    for N in N_star:
+        try:
+            ns, r = load_polynomial_alpha_attractor_line(int(N), k=k, data_dir=data_dir)
+            line = ax.plot(ns, r, **default_kwargs)
+            if line_handle is None:
+                line_handle = line[0]
+        except FileNotFoundError as e:
+            print(f"Warning: {e}")
+            continue
+
+    label = get_polynomial_alpha_attractor_label(N_star, k)
+
+    if return_handles:
+        return line_handle, label
     return None
