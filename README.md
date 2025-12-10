@@ -64,13 +64,14 @@ Please see the paper for more details. All chains have had 30% burn-in removed a
 
 ```
 r_ns_2025/
-├── streamlit_app.py          # Online plotting app
-├── r_ns_plot.py              # Simple plotting script
-├── r_ns_plot.ipynb           # Jupyter notebook for paper plots
-├── theory_models.py          # Inflation model predictions
-├── plot_style.py             # Matplotlib styling and configuration
-├── legend_utils.py           # Custom legend handlers
-└── chains/                   # MCMC chains
+├── streamlit_app.py            # Online plotting app
+├── r_ns_plot.py                # Simple plotting script
+├── r_ns_plot.ipynb             # Jupyter notebook for paper plots
+├── theory_models.py            # Inflation model predictions
+├── plot_style.py               # Matplotlib styling and configuration
+├── legend_utils.py             # Custom legend handlers
+├── generic_r_ns_calculation.py # Code to calculate r, ns given an inflaton potential
+└── chains/                     # MCMC chains
     ├── SPA_BK/
     └── SPA_BK_DESI/
 ```
