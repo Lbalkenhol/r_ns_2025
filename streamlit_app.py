@@ -742,9 +742,9 @@ from plot_style import style_dict
 from theory_models import (
     add_concave_convex_divide, 
     add_concave_convex_labels,
-    add_efold_shading,
+    add_efold_shading_monomial,
     add_alpha_unity_model_markers,
-    add_polynomial_potentials,
+    add_monomial_potentials,
     add_polynomial_alpha_attractor,
     ALPHA_UNITY_MODELS,
 )
