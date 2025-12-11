@@ -46,6 +46,13 @@ st.markdown(
     "When using this tool for publications (see export options at the bottom of the sidebar), please cite TBD, link to this webpage, and cite the appropriate publications for any data constraints you may be showing."
 )
 
+# Set reasonable limits for image rendering to prevent crashes
+import matplotlib
+
+matplotlib.rcParams["figure.max_open_warning"] = 0
+# Limit DPI for display (exports can use higher DPI)
+DISPLAY_DPI = 200  # Lower DPI for Streamlit display
+
 # ============================================================================
 # Load Data (cached for performance)
 # ============================================================================
@@ -706,18 +713,40 @@ ax.yaxis.set_zorder(1000)
 ax.set_ylabel("Tensor-to-scalar ratio $r$")
 ax.set_xlabel("Scalar spectral index $n_s$")
 
-plt.tight_layout()
+# Try tight_layout, but don't fail if it doesn't work with GetDist
+try:
+    plt.tight_layout()
+except:
+    pass
 
-# Display plot in Streamlit with adjustable width
+# Check figure size and prevent rendering if too large
+fig = plt.gcf()
+fig_width, fig_height = fig.get_size_inches()
+estimated_pixels = (fig_width * DISPLAY_DPI) * (fig_height * DISPLAY_DPI)
+
+# Limit to ~50 million pixels (well under PIL's 178M limit)
+MAX_SAFE_PIXELS = 50_000_000
+
+if estimated_pixels > MAX_SAFE_PIXELS:
+    st.error(
+        f"Plot is too large to display ({estimated_pixels/1e6:.1f}M pixels). "
+        f"Please reduce the plot size or aspect ratio. "
+        f"Maximum safe size: {MAX_SAFE_PIXELS/1e6:.1f}M pixels."
+    )
+    st.stop()
+
+# Display plot in Streamlit with adjustable width and controlled DPI
+# Use lower DPI for display to prevent memory issues on Streamlit Cloud
 if plot_width == 100:
     # Full width - use single column
-    st.pyplot(plt.gcf())
+    st.pyplot(plt.gcf(), dpi=DISPLAY_DPI, use_container_width=True)
 else:
     # Use three columns with proper ratios
     left_width = (100 - plot_width) / 2
     col1, col2, col3 = st.columns([left_width, plot_width, left_width])
     with col2:
-        st.pyplot(plt.gcf())
+        st.pyplot(plt.gcf(), dpi=DISPLAY_DPI, use_container_width=True)
+
 
 # ============================================================================
 # Download Options
