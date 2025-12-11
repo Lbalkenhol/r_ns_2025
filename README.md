@@ -13,7 +13,7 @@ To make your own $r$ - $n_s$ plots you can use the **[online plotting app](https
 The app allows you to:
 - Toggle between different data constraints and forecasts
 - Add your own forecast contours
-- Show theoretical predictions (e.g. polynomial potentials, Higgs inflation)
+- Show theoretical predictions (e.g. monomial potentials, Higgs inflation, polynomial $\alpha$-attractors)
 - Add your own theoretical prediction
 - Adjust plot appearance (aspect ratio, axis limits, log scale)
 - **Export plots as PDF/PNG** for your publications

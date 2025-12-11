@@ -15,18 +15,22 @@ from plot_style import style_dict
 from theory_models import (
     add_concave_convex_divide,
     add_concave_convex_labels,
-    add_efold_shading,
+    add_efold_shading_monomial,
     add_alpha_unity_model_markers,
-    add_polynomial_potentials,
+    add_monomial_potentials,
+    add_polynomial_alpha_attractor,
+    ALPHA_UNITY_MODELS,
 )
 from legend_utils import (
     create_dummy_plot_elements_for_legend,
     add_model_handlers_to_legend,
+    add_monomial_legend_entry,
+    add_alpha_attractor_legend_entry,
 )
 
 rgw_str = "r"
 ns_str = "n_s"
-N_star_str = "N_{\star}"
+N_star_str = "N_{\\star}"
 
 # ============================================================================
 # Page Configuration
@@ -167,7 +171,7 @@ use_log_scale = st.sidebar.checkbox("Log scale for $r$", value=False)
 
 # Initialize session state if not exists
 if "ns_min" not in st.session_state:
-    st.session_state.ns_min = 0.9515
+    st.session_state.ns_min = 0.954
 if "ns_max" not in st.session_state:
     st.session_state.ns_max = 1.0
 if "r_min" not in st.session_state:
@@ -180,8 +184,8 @@ if "use_log_scale" not in st.session_state:
 # Update r_min based on log scale toggle
 if use_log_scale != st.session_state.use_log_scale:
     if use_log_scale:
-        st.session_state.r_min = 1e-3
-        st.session_state.r_max = 0.1
+        st.session_state.r_min = 3e-4
+        st.session_state.r_max = 1e-1
     else:
         st.session_state.r_min = 0.0
         st.session_state.r_max = 0.1
@@ -225,11 +229,11 @@ r_max = st.sidebar.number_input(
 
 # Reset button
 if st.sidebar.button("Reset to Default"):
-    st.session_state.ns_min = 0.9515
+    st.session_state.ns_min = 0.954
     st.session_state.ns_max = 1.0
     if use_log_scale:
-        st.session_state.r_min = 1e-3
-        st.session_state.r_max = 0.1
+        st.session_state.r_min = 3e-4
+        st.session_state.r_max = 1e-1
     else:
         st.session_state.r_min = 0.0
         st.session_state.r_max = 0.1
@@ -259,13 +263,13 @@ show_fc = st.sidebar.checkbox(
     f"CMB 2030s (${{\small {ns_str}=\mu^{{SPA+BK}}}}$)", value=False
 )
 st.sidebar.markdown(
-    f"$${{\small {rgw_str}\sim\mathcal{{N}}(3\\times 10^{{-3}},10^{{-3}}),}}\\\\{{\small {ns_str}\sim\mathcal{{N}}(\mu^{{SPA+BK}}, 2\\times 10^{{-3}})}}$$"
+    f"$${{\small {rgw_str}\\sim\\mathcal{{N}}(3\\times 10^{{-3}},10^{{-3}}),}}\\\\{{\small {ns_str}\\sim\\mathcal{{N}}(\\mu^{{SPA+BK}}, 2\\times 10^{{-3}})}}$$"
 )
 show_fc_desi = st.sidebar.checkbox(
-    f"CMB 2030s (${{\small {ns_str}=\mu^{{SPA+BK+DESI}}}}$)", value=False
+    f"CMB 2030s (${{\small {ns_str}=\\mu^{{SPA+BK+DESI}}}}$)", value=False
 )
 st.sidebar.markdown(
-    f"$${{\small {rgw_str}\sim\mathcal{{N}}(3\\times 10^{{-3}},10^{{-3}}),}}\\\\{{\small {ns_str}\sim\mathcal{{N}}(\mu^{{SPA+BK+DESI}}, 2\\times 10^{{-3}})}}$$"
+    f"$${{\small {rgw_str}\\sim\\mathcal{{N}}(3\\times 10^{{-3}},10^{{-3}}),}}\\\\{{\small {ns_str}\\sim\\mathcal{{N}}(\\mu^{{SPA+BK+DESI}}, 2\\times 10^{{-3}})}}$$"
 )
 
 # Custom forecast
@@ -281,7 +285,7 @@ if show_custom:
         step=1e-4,
     )
     custom_sigma_r = st.sidebar.number_input(
-        f"$\sigma({rgw_str})$",
+        f"$\\sigma({rgw_str})$",
         min_value=1e-5,
         max_value=0.1,
         value=1e-3,
@@ -297,7 +301,7 @@ if show_custom:
         step=0.001,
     )
     custom_sigma_ns = st.sidebar.number_input(
-        f"$\sigma({ns_str})$",
+        f"$\\sigma({ns_str})$",
         min_value=1e-5,
         max_value=0.1,
         value=2e-3,
@@ -324,34 +328,118 @@ if show_custom:
         "label": custom_label,
     }
 
-# Theory elements
+# ============================================================================
+# Theory Elements
+# ============================================================================
+
 st.sidebar.header("Theory Elements")
-show_divide = st.sidebar.checkbox("Concave/Convex divide", value=False)
-show_labels = st.sidebar.checkbox("Concave/Convex labels", value=False)
-show_efold = st.sidebar.checkbox(
-    f"Number of e-folds ${N_star_str}$ shading", value=True
-)
 
-# Always define N_min and N_max for use by polynomial potentials
-if show_efold:
-    N_min = st.sidebar.slider(f"${N_star_str}$ min", 40, 70, 50)
-    N_max = st.sidebar.slider(f"${N_star_str}$ max", 40, 70, 60)
+# --- Concave/Convex ---
+st.sidebar.subheader("Concave/Convex")
+show_divide = st.sidebar.checkbox("Dividing line", value=True)
+if show_divide:
+    show_labels = st.sidebar.checkbox("Labels", value=True)
 else:
-    # Default values when e-fold shading is off
-    N_min = 50
-    N_max = 60
+    show_labels = False
 
-# Model markers
-show_polynomial = st.sidebar.checkbox(f"Polynomial potentials", value=False)
-st.sidebar.markdown(
-    "$$\\small V(\phi) \propto \phi^{n},\, n=1, \\frac{2}{3}, \\frac{1}{3}$$"
-)
-show_starobinsky = st.sidebar.checkbox("Starobinsky $R^2$", value=False)
-st.sidebar.markdown("$$\\small 42 \leq N_\star \leq 52$$")
-show_higgs = st.sidebar.checkbox("Higgs inflation", value=False)
+# --- Monomial Potentials ---
+st.sidebar.subheader("Monomial Potentials")
+show_monomial = st.sidebar.checkbox("Show monomial potentials", value=True)
+if show_monomial:
+    st.sidebar.markdown("$$\\small V(\\phi) \\propto \\phi^{n}$$")
+    show_efold = st.sidebar.checkbox(f"$${N_star_str}$$ shading", value=True)
+    show_monomial_lines = st.sidebar.checkbox("Example potentials", value=True)
+    st.sidebar.markdown("$$\\small n=1, \\frac{2}{3}, \\frac{1}{3}$$")
 
-# Custom model marker
-show_custom_marker = st.sidebar.checkbox("Custom Model Marker", value=False)
+    if show_efold or show_monomial_lines:
+        N_min = st.sidebar.slider(
+            f"${N_star_str}$ min", 40, 65, 47, key="monomial_N_min"
+        )
+        N_max = st.sidebar.slider(
+            f"${N_star_str}$ max", 40, 65, 57, key="monomial_N_max"
+        )
+    else:
+        N_min = 47
+        N_max = 57
+else:
+    show_efold = False
+    show_monomial_lines = False
+    N_min = 47
+    N_max = 57
+
+# --- Starobinsky R² ---
+st.sidebar.subheader("Starobinsky $R^2$")
+show_starobinsky = st.sidebar.checkbox("Show Starobinsky $R^2$", value=False)
+if show_starobinsky:
+    starobinsky_mode = st.sidebar.radio(
+        "",  # Empty label - removed "Display mode"
+        ["Single $N_\\star$", "$N_\\star$ range"],
+        key="starobinsky_mode",
+        label_visibility="collapsed",
+        horizontal=True,
+    )
+    if starobinsky_mode == "Single $N_\\star$":
+        starobinsky_N = st.sidebar.slider(
+            f"${N_star_str}$", 40, 60, 51, key="starobinsky_single"
+        )
+        ALPHA_UNITY_MODELS["Starobinsky $R^2$"] = starobinsky_N
+    else:
+        starobinsky_N_min = st.sidebar.slider(
+            f"${N_star_str}$ min", 40, 60, 47, key="starobinsky_min"
+        )
+        starobinsky_N_max = st.sidebar.slider(
+            f"${N_star_str}$ max", 40, 60, 57, key="starobinsky_max"
+        )
+        ALPHA_UNITY_MODELS["Starobinsky $R^2$"] = [starobinsky_N_min, starobinsky_N_max]
+
+# --- Higgs Inflation ---
+st.sidebar.subheader("Higgs Inflation")
+show_higgs = st.sidebar.checkbox("Show Higgs inflation", value=False)
+if show_higgs:
+    higgs_mode = st.sidebar.radio(
+        "",  # Empty label - removed "Display mode"
+        ["Single $N_\\star$", "$N_\\star$ range"],
+        label_visibility="collapsed",
+        key="higgs_mode",
+        horizontal=True,
+    )
+    if higgs_mode == "Single $N_\\star$":
+        higgs_N = st.sidebar.slider(f"${N_star_str}$", 40, 60, 55, key="higgs_single")
+        ALPHA_UNITY_MODELS["Higgs"] = higgs_N
+    else:
+        higgs_N_min = st.sidebar.slider(
+            f"${N_star_str}$ min", 40, 60, 47, key="higgs_min"
+        )
+        higgs_N_max = st.sidebar.slider(
+            f"${N_star_str}$ max", 40, 60, 57, key="higgs_max"
+        )
+        ALPHA_UNITY_MODELS["Higgs"] = [higgs_N_min, higgs_N_max]
+
+# --- Polynomial α-attractor ---
+st.sidebar.subheader("Polynomial α-attractor")
+show_alpha_attractor = st.sidebar.checkbox("Show polynomial α-attractor", value=False)
+if show_alpha_attractor:
+    st.sidebar.markdown("$$\\small V(\\phi) \\propto |\\phi|^k/(\\mu^k + |\\phi|^k)$$")
+    alpha_k = st.sidebar.selectbox("Power $k$", [1, 2, 3, 4], index=1)
+    alpha_num_lines = st.sidebar.radio(
+        "Number of lines", [1, 2], index=1, horizontal=True
+    )
+
+    alpha_N_values = []
+    if alpha_num_lines >= 1:
+        alpha_N_1 = st.sidebar.slider(
+            f"${N_star_str}$ (line 1)", 40, 65, 47, key="alpha_N_1"
+        )
+        alpha_N_values.append(alpha_N_1)
+    if alpha_num_lines >= 2:
+        alpha_N_2 = st.sidebar.slider(
+            f"${N_star_str}$ (line 2)", 40, 65, 57, key="alpha_N_2"
+        )
+        alpha_N_values.append(alpha_N_2)
+
+# --- Custom Model Marker ---
+st.sidebar.subheader("Custom Model Marker")
+show_custom_marker = st.sidebar.checkbox("Show custom model marker", value=False)
 if show_custom_marker:
     st.sidebar.markdown("**Custom Model Parameters**")
     custom_marker_r = st.sidebar.number_input(
@@ -373,11 +461,13 @@ if show_custom_marker:
         key="custom_marker_ns",
     )
     custom_marker_label = st.sidebar.text_input(
-        "Model label", value="Custom Model", key="custom_marker_label"
+        "Model label",
+        value="Custom Model $V(\\varphi)\\propto\\dots$",
+        key="custom_marker_label",
     )
 
 # Legend options
-legend_fontsize = 10
+legend_fontsize = 9
 
 # ============================================================================
 # Generate Plot
@@ -415,24 +505,32 @@ if len(all_dat) > 0:
 # Get the axes from the GetDist plotter
 ax = plt.gca()
 
-# Add theory elements
+# Add theory elements in correct order for proper layering
+# Layering (back to front): grey shading -> divide line -> red lines -> data -> ticks
+
+# Grey shading (lowest background)
 if show_efold:
-    add_efold_shading(ax, N_range=(N_min, N_max), ns_range=(ns_min, ns_max))
+    add_efold_shading_monomial(
+        ax, N_range=(N_min, N_max), ns_range=(ns_min, ns_max), zorder=-10
+    )
 
+# Concave/convex divide (above shading)
 if show_divide:
-    add_concave_convex_divide(ax, ns_range=(ns_min, ns_max))
+    add_concave_convex_divide(ax, ns_range=(ns_min, ns_max), zorder=-5)
 
+# Concave/convex labels
 if show_labels:
     add_concave_convex_labels(ax)
 
-# Add polynomial potentials
-if show_polynomial:
-    add_polynomial_potentials(
+# Red monomial lines (above divide, but still behind data)
+if show_monomial_lines:
+    add_monomial_potentials(
         ax,
         p_values=[1 / 3, 2 / 3, 1],
         N_range=(N_min, N_max),
-        add_labels=False,  # Don't add the on-panel text labels
+        add_labels=False,
         return_handles=False,
+        zorder=-1,
     )
 
 # Add model markers - in desired legend order
@@ -444,6 +542,12 @@ if show_higgs:
 
 if len(models_to_show) > 0:
     add_alpha_unity_model_markers(ax, models=models_to_show, return_handles=False)
+
+# Add polynomial alpha-attractor lines
+if show_alpha_attractor and len(alpha_N_values) > 0:
+    add_polynomial_alpha_attractor(
+        ax, N_star=alpha_N_values, k=alpha_k, return_handles=False
+    )
 
 # Add custom model marker (will appear last)
 if show_custom_marker:
@@ -459,9 +563,21 @@ if show_custom_marker:
         label=custom_marker_label,
     )
 
-# Add legend using the automatic handler function
-# Add legend using the automatic handler function
-if len(all_dat) > 0 or len(models_to_show) > 0 or show_polynomial or show_custom_marker:
+# ============================================================================
+# Legend Construction
+# ============================================================================
+
+# Determine if we need the advanced legend system
+needs_advanced_legend = (
+    len(all_dat) > 0
+    or show_monomial_lines
+    or show_efold
+    or len(models_to_show) > 0
+    or (show_alpha_attractor and len(alpha_N_values) > 0)
+    or show_custom_marker
+)
+
+if needs_advanced_legend:
     # Determine legend location based on log scale
     legend_loc = "lower right" if use_log_scale else "upper right"
 
@@ -471,118 +587,99 @@ if len(all_dat) > 0 or len(models_to_show) > 0 or show_polynomial or show_custom
         legend_handles, legend_labels, handler_map = (
             create_dummy_plot_elements_for_legend(all_dat, True)
         )
-
-        # Get model handles from the plot and organize in desired order
-        plot_handles, plot_labels = ax.get_legend_handles_labels()
-
-        # Separate polynomial, Starobinsky, Higgs, and custom markers
-        poly_handles = []
-        poly_labels = []
-        staro_handles = []
-        staro_labels = []
-        higgs_handles = []
-        higgs_labels = []
-        custom_handles = []
-        custom_labels = []
-
-        for h, l in zip(plot_handles, plot_labels):
-            # Skip data constraint labels (already in legend_handles)
-            if l in [style_dict[dat]["label"] for dat in all_dat if dat in style_dict]:
-                continue
-
-            # Categorize by label
-            if l.startswith("$V(\\phi)"):  # Polynomial potentials
-                poly_handles.append(h)
-                poly_labels.append(l)
-            elif l == "Starobinsky $R^2$":
-                staro_handles.append(h)
-                staro_labels.append(l)
-            elif l == "Higgs":
-                higgs_handles.append(h)
-                higgs_labels.append(l)
-            else:  # Custom marker
-                custom_handles.append(h)
-                custom_labels.append(l)
-
-        # Add in desired order: data, polynomial, Starobinsky, Higgs, custom
-        legend_handles.extend(poly_handles)
-        legend_labels.extend(poly_labels)
-        legend_handles.extend(staro_handles)
-        legend_labels.extend(staro_labels)
-        legend_handles.extend(higgs_handles)
-        legend_labels.extend(higgs_labels)
-        legend_handles.extend(custom_handles)
-        legend_labels.extend(custom_labels)
-
-        # Use the automatic handler function
-        add_model_handlers_to_legend(
-            ax,
-            handles=legend_handles,
-            labels=legend_labels,
-            handler_map=handler_map,
-            loc=legend_loc,
-            fontsize=legend_fontsize,
-            handlelength=1.5,
+    elif len(all_dat) > 0:
+        # Regular data constraints
+        legend_handles, legend_labels, handler_map = (
+            create_dummy_plot_elements_for_legend(all_dat, True)
         )
-
     else:
-        # Standard legend without two-line handler
-        # Create dummy elements for data constraints (adds them to the plot)
-        if len(all_dat) > 0:
-            create_dummy_plot_elements_for_legend(all_dat, return_entries=False)
+        # No data constraints
+        legend_handles = []
+        legend_labels = []
+        handler_map = {}
 
-        # Now get ALL handles from the plot (including the dummy elements we just created)
+    # Add monomial potential entry if requested
+    if show_monomial_lines or show_efold:
+        # Determine y-offset based on whether we have multiline entries below
+        has_multiline_below = (
+            (show_starobinsky and starobinsky_mode == "Single $N_\\star$")
+            or (show_higgs and higgs_mode == "Single $N_\\star$")
+            or (show_alpha_attractor and len(alpha_N_values) > 0)
+        )
+        yoffset = 5.25 if has_multiline_below else 0.0
+
+        # Choose handler based on what's shown
+        if show_monomial_lines and show_efold:
+            # Both: use custom handler with red line and grey shading
+            add_monomial_legend_entry(
+                legend_handles,
+                legend_labels,
+                handler_map,
+                N_range=(N_min, N_max),
+                yoffset=yoffset,
+            )
+        elif show_efold:
+            # Only shading: show grey rectangle with V∝φⁿ (no specific exponents)
+            from matplotlib.patches import Rectangle
+
+            dummy_handle = Rectangle((0, 0), 1, 1, facecolor="0.8", edgecolor="0.6")
+            legend_handles.append(dummy_handle)
+            legend_labels.append(
+                f"$V(\\phi) \\propto \\phi^n$\n(${N_min}\\leq\\! N_\\star\\!\\leq {N_max}$)"
+            )
+        else:
+            # Only monomial lines: show red line with specific exponents
+            from matplotlib.lines import Line2D
+
+            dummy_handle = Line2D([], [], color="r", lw=1.2)
+            legend_handles.append(dummy_handle)
+            legend_labels.append(
+                r"$V(\phi) \propto \phi^{n},\, n=1, \sfrac{2}{3}, \sfrac{1}{3}$"
+                + f"\n(${N_min}\\leq\\! N_\\star\\!\\leq {N_max}$)"
+            )
+
+    # Get model handles from the plot
+    model_handles, model_labels = add_alpha_unity_model_markers(
+        ax, models=models_to_show, return_handles=True
+    )
+    if model_handles:
+        legend_handles.extend(model_handles)
+        legend_labels.extend(model_labels)
+
+    # Add polynomial alpha-attractor entry if requested
+    if show_alpha_attractor and len(alpha_N_values) > 0:
+        # Determine y-offset (0 if >2 N* values, otherwise 5.25)
+        yoffset = 0.0 if len(alpha_N_values) > 2 else 5.25
+        add_alpha_attractor_legend_entry(
+            legend_handles,
+            legend_labels,
+            handler_map,
+            N_star=alpha_N_values,
+            k=alpha_k,
+            yoffset=yoffset,
+        )
+
+    # Add custom marker handle if present
+    if show_custom_marker:
+        # Get the custom marker from the plot
         plot_handles, plot_labels = ax.get_legend_handles_labels()
-
-        # Separate elements by type in desired order
-        data_handles = []
-        data_labels = []
-        poly_handles = []
-        poly_labels = []
-        staro_handles = []
-        staro_labels = []
-        higgs_handles = []
-        higgs_labels = []
-        custom_handles = []
-        custom_labels = []
-
         for h, l in zip(plot_handles, plot_labels):
-            # Categorize each element
-            if l in [style_dict[dat]["label"] for dat in all_dat if dat in style_dict]:
-                # Data constraints
-                data_handles.append(h)
-                data_labels.append(l)
-            elif l.startswith("$V(\\phi)"):  # Polynomial potentials
-                poly_handles.append(h)
-                poly_labels.append(l)
-            elif l == "Starobinsky $R^2$":
-                staro_handles.append(h)
-                staro_labels.append(l)
-            elif l == "Higgs":
-                higgs_handles.append(h)
-                higgs_labels.append(l)
-            else:  # Custom marker
-                custom_handles.append(h)
-                custom_labels.append(l)
+            if l == custom_marker_label:
+                legend_handles.append(h)
+                legend_labels.append(l)
+                break
 
-        # Combine in desired order: data, polynomial, Starobinsky, Higgs, custom
-        all_handles = (
-            data_handles + poly_handles + staro_handles + higgs_handles + custom_handles
-        )
-        all_labels = (
-            data_labels + poly_labels + staro_labels + higgs_labels + custom_labels
-        )
-
-        # Use the automatic handler function (will detect Starobinsky and add handler)
-        add_model_handlers_to_legend(
-            ax,
-            handles=all_handles,
-            labels=all_labels,
-            handler_map=None,  # No pre-existing handler_map
-            loc=legend_loc,
-            fontsize=legend_fontsize,
-            handlelength=1.5,
-        )
+    # Create the legend with all handlers
+    add_model_handlers_to_legend(
+        ax,
+        handles=legend_handles,
+        labels=legend_labels,
+        handler_map=handler_map,
+        loc=legend_loc,
+        fontsize=legend_fontsize,
+        handlelength=1.5,
+        ncol=1,
+    )
 
 # Set axis properties
 ax.set_ylim((r_min, r_max))
@@ -597,8 +694,15 @@ if use_log_scale:
     ax.yaxis.set_minor_locator(LogLocator(subs="auto"))
 else:
     ax.yaxis.set_minor_locator(AutoMinorLocator())
-
 ax.xaxis.set_minor_locator(AutoMinorLocator())
+
+# Set axis ticks and spines to foreground
+ax.set_axisbelow(False)
+for spine in ax.spines.values():
+    spine.set_zorder(1000)
+ax.xaxis.set_zorder(1000)
+ax.yaxis.set_zorder(1000)
+
 ax.set_ylabel("Tensor-to-scalar ratio $r$")
 ax.set_xlabel("Scalar spectral index $n_s$")
 
@@ -621,19 +725,8 @@ else:
 
 st.sidebar.header("Export")
 
-# Save buttons
-if st.sidebar.button("Save as PDF"):
-    plt.gcf().savefig("r_ns_plot.pdf", bbox_inches="tight", dpi=400)
-    st.sidebar.success("Saved as r_ns_plot.pdf")
-
-if st.sidebar.button("Save as PNG"):
-    plt.gcf().savefig("r_ns_plot.png", bbox_inches="tight", dpi=400)
-    st.sidebar.success("Saved as r_ns_plot.png")
-
-# Export code button
-if st.sidebar.button("Export Python Code"):
-    # Generate the Python script based on current settings
-    code = f'''"""
+# Generate the Python script code (we'll need this for the download button)
+code = f'''"""
 Generated r-ns plot script
 Created by Interactive r-ns Plot Generator
 """
@@ -651,9 +744,16 @@ from theory_models import (
     add_concave_convex_labels,
     add_efold_shading,
     add_alpha_unity_model_markers,
-    add_polynomial_potentials
+    add_polynomial_potentials,
+    add_polynomial_alpha_attractor,
+    ALPHA_UNITY_MODELS,
 )
-from legend_utils import create_dummy_plot_elements_for_legend, add_model_handlers_to_legend
+from legend_utils import (
+    create_dummy_plot_elements_for_legend, 
+    add_model_handlers_to_legend,
+    add_monomial_legend_entry,
+    add_alpha_attractor_legend_entry,
+)
 
 # ============================================================================
 # Load Data
@@ -662,14 +762,14 @@ from legend_utils import create_dummy_plot_elements_for_legend, add_model_handle
 chain_files = {{
 '''
 
-    # Add chain loading based on selection
-    if show_spa_bk or show_spa_bk_desi:
-        if show_spa_bk:
-            code += """    "SPA_BK": "chains/SPA_BK/CLASS",\n"""
-        if show_spa_bk_desi:
-            code += """    "SPA_BK_DESI": "chains/SPA_BK_DESI/CLASS",\n"""
+# Add chain loading based on selection
+if show_spa_bk or show_spa_bk_desi:
+    if show_spa_bk:
+        code += """    "SPA_BK": "chains/SPA_BK/CLASS",\n"""
+    if show_spa_bk_desi:
+        code += """    "SPA_BK_DESI": "chains/SPA_BK_DESI/CLASS",\n"""
 
-    code += """}
+code += """}
 
 chains = {}
 for key, value in chain_files.items():
@@ -677,16 +777,16 @@ for key, value in chain_files.items():
 
 """
 
-    # Add forecast creation if needed
-    if show_fc or show_fc_desi or show_custom:
-        code += """# Create forecast chains preserving r-ns correlation from real data
+# Add forecast creation if needed
+if show_fc or show_fc_desi or show_custom:
+    code += """# Create forecast chains preserving r-ns correlation from real data
 cov = chains["SPA_BK"].cov(["r", "n_s"])
 corr = cov / np.sqrt(np.outer(np.diag(cov), np.diag(cov)))
 
 """
 
-        if show_fc:
-            code += """cov_scaled = np.diag([1e-3, 2e-3]) @ corr @ np.diag([1e-3, 2e-3])
+    if show_fc:
+        code += """cov_scaled = np.diag([1e-3, 2e-3]) @ corr @ np.diag([1e-3, 2e-3])
 mrg = chains["SPA_BK"].getMargeStats()
 chains["FC"] = getdist.gaussian_mixtures.GaussianND([3e-3, mrg.parWithName("n_s").mean],
                                                     cov_scaled,
@@ -694,8 +794,8 @@ chains["FC"] = getdist.gaussian_mixtures.GaussianND([3e-3, mrg.parWithName("n_s"
 
 """
 
-        if show_fc_desi:
-            code += """cov_scaled = np.diag([1e-3, 2e-3]) @ corr @ np.diag([1e-3, 2e-3])
+    if show_fc_desi:
+        code += """cov_scaled = np.diag([1e-3, 2e-3]) @ corr @ np.diag([1e-3, 2e-3])
 mrg_desi = chains["SPA_BK_DESI"].getMargeStats()
 chains["FC_DESI"] = getdist.gaussian_mixtures.GaussianND([3e-3, mrg_desi.parWithName("n_s").mean],
                                                          cov_scaled,
@@ -703,8 +803,8 @@ chains["FC_DESI"] = getdist.gaussian_mixtures.GaussianND([3e-3, mrg_desi.parWith
 
 """
 
-        if show_custom:
-            code += f"""# Custom forecast
+    if show_custom:
+        code += f"""# Custom forecast
 cov_scaled = np.diag([{custom_sigma_r}, {custom_sigma_ns}]) @ corr @ np.diag([{custom_sigma_r}, {custom_sigma_ns}])
 chains["CUSTOM"] = getdist.gaussian_mixtures.GaussianND([{custom_r_central}, {custom_ns_central}],
                                                         cov_scaled,
@@ -720,7 +820,32 @@ style_dict["CUSTOM"] = {{
 
 """
 
-    code += """# ============================================================================
+# Update ALPHA_UNITY_MODELS if needed
+if show_starobinsky:
+    if starobinsky_mode == "Single $N_\\star$":
+        code += f"""# Update Starobinsky N*
+ALPHA_UNITY_MODELS["Starobinsky $R^2$"] = {starobinsky_N}
+
+"""
+    else:
+        code += f"""# Update Starobinsky N* range
+ALPHA_UNITY_MODELS["Starobinsky $R^2$"] = [{starobinsky_N_min}, {starobinsky_N_max}]
+
+"""
+
+if show_higgs:
+    if higgs_mode == "Single $N_\\star$":
+        code += f"""# Update Higgs N*
+ALPHA_UNITY_MODELS["Higgs"] = {higgs_N}
+
+"""
+    else:
+        code += f"""# Update Higgs N* range
+ALPHA_UNITY_MODELS["Higgs"] = [{higgs_N_min}, {higgs_N_max}]
+
+"""
+
+code += """# ============================================================================
 # Create Plot
 # ============================================================================
 
@@ -729,135 +854,197 @@ plt.close()
 # Create GetDist plotter
 g = plots.get_single_plotter(width_inch="""
 
-    code += f"""{plot_width_inch:.3f}, ratio={1/aspect_ratio:.2f})
+code += f"""{plot_width_inch:.3f}, ratio={1/aspect_ratio:.2f})
 g.settings.legend_frame = False
 
 # Plot data constraints
 all_dat = ["""
 
-    # Add dataset list
-    dat_list = []
-    if show_spa_bk:
-        dat_list.append('"SPA_BK"')
-    if show_spa_bk_desi:
-        dat_list.append('"SPA_BK_DESI"')
-    if show_fc:
-        dat_list.append('"FC"')
-    if show_fc_desi:
-        dat_list.append('"FC_DESI"')
-    if show_custom:
-        dat_list.append('"CUSTOM"')
+# Add dataset list
+dat_list = []
+if show_spa_bk:
+    dat_list.append('"SPA_BK"')
+if show_spa_bk_desi:
+    dat_list.append('"SPA_BK_DESI"')
+if show_fc:
+    dat_list.append('"FC"')
+if show_fc_desi:
+    dat_list.append('"FC_DESI"')
+if show_custom:
+    dat_list.append('"CUSTOM"')
 
-    code += (
-        ", ".join(dat_list)
-        + """]
+code += (
+    ", ".join(dat_list)
+    + """]
 
-g.plot_2d([chains[dat] for dat in all_dat],
-          ["n_s", "r"],
-          colors=[style_dict[dat]["colour"] for dat in all_dat],
-          ls=[style_dict[dat]["ls"] for dat in all_dat],
-          lws=[style_dict[dat]["lw"] for dat in all_dat],
-          filled=[style_dict[dat]["filled"] for dat in all_dat])
+if len(all_dat) > 0:
+    g.plot_2d([chains[dat] for dat in all_dat],
+              ["n_s", "r"],
+              colors=[style_dict[dat]["colour"] for dat in all_dat],
+              ls=[style_dict[dat]["ls"] for dat in all_dat],
+              lws=[style_dict[dat]["lw"] for dat in all_dat],
+              filled=[style_dict[dat]["filled"] for dat in all_dat])
 
 ax = plt.gca()
 
 """
-    )
+)
 
-    # Add theory elements
-    if show_efold:
-        code += f"""# Add e-fold shading
-add_efold_shading(ax, N_range=({N_min}, {N_max}), ns_range=({ns_min}, {ns_max}))
-
-"""
-
-    if show_divide:
-        code += f"""# Add concave/convex divide
-add_concave_convex_divide(ax, ns_range=({ns_min}, {ns_max}))
+# Add theory elements
+if show_efold:
+    code += f"""# Add e-fold shading for monomial potentials (lowest background)
+add_efold_shading_monomial(ax, N_range=({N_min}, {N_max}), ns_range=({ns_min}, {ns_max}), zorder=-10)
 
 """
 
-    if show_labels:
-        code += """# Add concave/convex labels
+if show_divide:
+    code += f"""# Add concave/convex divide (above shading)
+add_concave_convex_divide(ax, ns_range=({ns_min}, {ns_max}), zorder=-5)
+
+"""
+
+if show_labels:
+    code += """# Add concave/convex labels
 add_concave_convex_labels(ax)
 
 """
 
-    if show_polynomial:
-        code += f"""# Add polynomial potentials
-add_polynomial_potentials(ax, p_values=[1/3, 2/3, 1], N_range=({N_min}, {N_max}),
-                         add_labels=False, return_handles=False)
+if show_monomial_lines:
+    code += f"""# Add monomial potentials (above divide, behind data)
+add_monomial_potentials(ax, p_values=[1/3, 2/3, 1], N_range=({N_min}, {N_max}),
+                         add_labels=False, return_handles=False, zorder=-1)
 
 """
 
-    # Add model markers
-    if show_starobinsky or show_higgs:
-        code += """# Add model markers
+# Add model markers
+if show_starobinsky or show_higgs:
+    code += """# Add model markers
 models_to_show = ["""
-        model_list = []
-        if show_starobinsky:
-            model_list.append('"Starobinsky $R^2$"')
-        if show_higgs:
-            model_list.append('"Higgs"')
-        code += (
-            ", ".join(model_list)
-            + """]
+    model_list = []
+    if show_starobinsky:
+        model_list.append('"Starobinsky $R^2$"')
+    if show_higgs:
+        model_list.append('"Higgs"')
+    code += (
+        ", ".join(model_list)
+        + """]
 add_alpha_unity_model_markers(ax, models=models_to_show, return_handles=False)
 
 """
-        )
+    )
 
-    if show_custom_marker:
-        code += f"""# Add custom model marker
+# Add polynomial alpha-attractor
+if show_alpha_attractor and len(alpha_N_values) > 0:
+    code += f"""# Add polynomial alpha-attractor lines
+add_polynomial_alpha_attractor(ax, N_star={alpha_N_values}, k={alpha_k})
+
+"""
+
+if show_custom_marker:
+    code += f"""# Add custom model marker
 ax.scatter({custom_marker_ns}, {custom_marker_r}, 
           marker='*', s=200, c='orange', edgecolors='k', linewidths=0.5,
-          zorder=10, label="{custom_marker_label}")
+          zorder=10, label=r"{custom_marker_label}")
 
 """
 
-    # Add legend
-    legend_loc = "lower right" if use_log_scale else "upper right"
+# Add legend construction
+legend_loc = "lower right" if use_log_scale else "upper right"
 
+if needs_advanced_legend:
+    code += f"""# Build legend
+"""
     if show_fc and show_fc_desi:
-        code += f"""# Create legend with two-line handler
-legend_handles, legend_labels, handler_map = create_dummy_plot_elements_for_legend(all_dat, True)
-plot_handles, plot_labels = ax.get_legend_handles_labels()
-for h, l in zip(plot_handles, plot_labels):
-    if l not in [style_dict[dat]["label"] for dat in all_dat if dat in style_dict]:
-        legend_handles.append(h)
-        legend_labels.append(l)
-
-add_model_handlers_to_legend(ax, handles=legend_handles, labels=legend_labels,
-                             handler_map=handler_map, loc="{legend_loc}",
-                             fontsize={legend_fontsize}, handlelength=1.5)
-
+        code += """legend_handles, legend_labels, handler_map = create_dummy_plot_elements_for_legend(all_dat, True)
+"""
+    elif len(all_dat) > 0:
+        code += """legend_handles, legend_labels, handler_map = create_dummy_plot_elements_for_legend(all_dat, True)
 """
     else:
-        code += f"""# Create legend
-create_dummy_plot_elements_for_legend(all_dat)
-add_model_handlers_to_legend(ax, loc="{legend_loc}", fontsize={legend_fontsize}, handlelength=1.5)
+        code += """legend_handles, legend_labels, handler_map = [], [], {}
+"""
+
+    if show_monomial_lines or show_efold:
+        has_multiline_below = (
+            (show_starobinsky and starobinsky_mode == "Single $N_\\star$")
+            or (show_higgs and higgs_mode == "Single $N_\\star$")
+            or (show_alpha_attractor and len(alpha_N_values) > 0)
+        )
+        yoffset = 5.25 if has_multiline_below else 0.0
+
+        if show_monomial_lines and show_efold:
+            code += f"""add_monomial_legend_entry(legend_handles, legend_labels, handler_map, N_range=({N_min}, {N_max}), yoffset={yoffset})
+"""
+        elif show_efold:
+            code += f"""from matplotlib.patches import Rectangle
+dummy_handle = Rectangle((0, 0), 1, 1, facecolor='0.8', edgecolor='0.6')
+legend_handles.append(dummy_handle)
+legend_labels.append('$V(\\\\phi) \\\\propto \\\\phi^n$\\n(${N_min}\\\\leq\\\\! N_\\\\star\\\\!\\\\leq {N_max}$)')
+"""
+        else:
+            code += f"""from matplotlib.lines import Line2D
+dummy_handle = Line2D([], [], color='r', lw=1.2)
+legend_handles.append(dummy_handle)
+legend_labels.append(r'$V(\\phi) \\propto \\phi^{{n}},\\, n=1, \\sfrac{{2}}{{3}}, \\sfrac{{1}}{{3}}$' + '\\n(${N_min}\\\\leq\\\\! N_\\\\star\\\\!\\\\leq {N_max}$)')
+"""
+
+    if show_starobinsky or show_higgs:
+        code += """model_handles, model_labels = add_alpha_unity_model_markers(ax, models=models_to_show, return_handles=True)
+legend_handles.extend(model_handles)
+legend_labels.extend(model_labels)
+"""
+
+    if show_alpha_attractor and len(alpha_N_values) > 0:
+        yoffset = 0.0 if len(alpha_N_values) > 2 else 5.25
+        code += f"""add_alpha_attractor_legend_entry(legend_handles, legend_labels, handler_map, N_star={alpha_N_values}, k={alpha_k}, yoffset={yoffset})
+"""
+
+    if show_custom_marker:
+        # Escape the label properly for the exported code
+        # We need to get the label as it will appear after being rendered by matplotlib
+        escaped_label = custom_marker_label
+        code += f"""# Add custom marker to legend
+plot_handles, plot_labels = ax.get_legend_handles_labels()
+for h, l in zip(plot_handles, plot_labels):
+    if l == r"{escaped_label}":
+        legend_handles.append(h)
+        legend_labels.append(l)
+        break
+"""
+
+    code += f"""add_model_handlers_to_legend(ax, handles=legend_handles, labels=legend_labels,
+                             handler_map=handler_map, loc="{legend_loc}",
+                             fontsize={legend_fontsize}, handlelength=1.5, ncol=1)
 
 """
 
-    # Axis setup
-    code += f"""# Axis setup
+# Axis setup
+code += f"""# Axis setup
 ax.set_ylim(({r_min}, {r_max}))
 ax.set_xlim(({ns_min}, {ns_max}))
 
 """
 
-    if use_log_scale:
-        code += """# Log scale
+if use_log_scale:
+    code += """# Log scale
 ax.set_yscale("log")
 ax.yaxis.set_minor_locator(LogLocator(subs='auto'))
 
 """
-    else:
-        code += """ax.yaxis.set_minor_locator(AutoMinorLocator())
+else:
+    code += """ax.yaxis.set_minor_locator(AutoMinorLocator())
 
 """
 
-    code += """ax.xaxis.set_minor_locator(AutoMinorLocator())
+code += """ax.xaxis.set_minor_locator(AutoMinorLocator())
+
+# Set axis ticks and spines to foreground
+ax.set_axisbelow(False)
+for spine in ax.spines.values():
+    spine.set_zorder(1000)
+ax.xaxis.set_zorder(1000)
+ax.yaxis.set_zorder(1000)
+
 ax.set_ylabel("Tensor-to-scalar ratio $r$")
 ax.set_xlabel("Scalar spectral index $n_s$")
 
@@ -866,8 +1053,43 @@ plt.savefig("r_ns_plot.pdf", bbox_inches='tight', dpi=400)
 plt.show()
 """
 
-    # Save the code to file
-    with open("custom_rns_plot_script.py", "w") as f:
-        f.write(code)
+# Save current figure to bytes for PDF download
+import io
 
-    st.sidebar.success("Saved as custom_rns_plot_script.py")
+# Get the current figure dimensions
+fig = plt.gcf()
+fig_width, fig_height = fig.get_size_inches()
+
+# Set reasonable DPI limits to avoid oversized images
+max_dpi = min(400, int(65000 / max(fig_width, fig_height)))
+
+pdf_buffer = io.BytesIO()
+fig.savefig(pdf_buffer, format="pdf", bbox_inches="tight", dpi=max_dpi)
+pdf_buffer.seek(0)
+
+# Save current figure to bytes for PNG download
+png_buffer = io.BytesIO()
+fig.savefig(png_buffer, format="png", bbox_inches="tight", dpi=max_dpi)
+png_buffer.seek(0)
+
+# Download buttons (these trigger immediate downloads)
+st.sidebar.download_button(
+    label="Download as PDF",
+    data=pdf_buffer,
+    file_name="r_ns_plot.pdf",
+    mime="application/pdf",
+)
+
+st.sidebar.download_button(
+    label="Download as PNG",
+    data=png_buffer,
+    file_name="r_ns_plot.png",
+    mime="image/png",
+)
+
+st.sidebar.download_button(
+    label="Download Python Script",
+    data=code,
+    file_name="custom_rns_plot_script.py",
+    mime="text/x-python",
+)

@@ -13,7 +13,7 @@ from getdist import plots, loadMCSamples
 from plot_style import style_dict
 from theory_models import (
     add_concave_convex_divide,
-    add_efold_shading,
+    add_efold_shading_monomial,
 )
 
 # ============================================================================
@@ -51,7 +51,7 @@ g.plot_2d(
 )
 
 # Add theory elements (using publication N* range: 47-57)
-add_efold_shading(ax, N_range=(47, 57), ns_range=(0.96, 1.0))
+add_efold_shading_monomial(ax, N_range=(47, 57), ns_range=(0.96, 1.0))
 add_concave_convex_divide(ax, ns_range=(0.96, 1.0))
 
 # Legend

@@ -214,25 +214,21 @@ def add_model_handlers_to_legend(
 
     # Check each label and add appropriate handler if needed
     for handle, label in zip(handles, labels):
-        # Check if this is an alpha-unity model with N* range
+        # Check if this is an alpha-unity model with N* range (2 values)
         for model_name in ALPHA_UNITY_MODELS:
             model_label = get_alpha_unity_label(model_name)
             if label == model_label and model_name in alpha_unity_style_dict:
                 N_star = np.atleast_1d(ALPHA_UNITY_MODELS[model_name])
-                if len(N_star) > 1:
+                if len(N_star) == 2:
                     # This model needs the line-with-end-markers handler
                     model_style = alpha_unity_style_dict[model_name]
-                    extra_args = {}
-                    if "markerfacecolor" in model_style:
-                        extra_args["markerfacecolor"] = model_style["markerfacecolor"]
-                    if "markeredgecolor" in model_style:
-                        extra_args["markeredgecolor"] = model_style["markeredgecolor"]
                     handler_map[handle] = HandlerLineWithEndMarkers(
                         marker=model_style["marker"],
                         markersize=model_style["ms"] - 1,
-                        color=model_style["color"],
+                        color="k",
                         linewidth=model_style["lw"],
-                        **extra_args,
+                        markerfacecolor=model_style["color"],
+                        markeredgecolor=model_style["edgecolor"],
                     )
                 break
 

@@ -246,7 +246,7 @@ def add_concave_convex_divide(ax, ns_range=None, **kwargs):
     if ns_range is None:
         ns_range = (0.9, 1.1)
 
-    default_kwargs = {"ls": "-", "color": "k", "lw": 1, "alpha": 0.8}
+    default_kwargs = {"ls": "-", "color": "k", "lw": 1, "alpha": 0.8, "zorder": -5}
     default_kwargs.update(kwargs)
 
     ns = np.arange(ns_range[0], ns_range[1], 0.0001)
@@ -330,7 +330,7 @@ def add_concave_convex_labels(
     )
 
 
-def add_polynomial_potentials(
+def add_monomial_potentials(
     ax,
     p_values=[1 / 3, 2 / 3, 1],
     N_range=(47, 57),
@@ -340,7 +340,7 @@ def add_polynomial_potentials(
     **kwargs,
 ):
     """
-    Add polynomial potential curves V ∝ φ^p to plot.
+    Add monomial potential curves V ∝ φ^p to plot.
 
     Parameters
     ----------
@@ -366,7 +366,7 @@ def add_polynomial_potentials(
         If return_handles=False: the p=1 line handle
         If return_handles=True: (line_handle, legend_label) for p=1
     """
-    default_kwargs = {"ls": "-", "color": "r", "lw": 1.2, "alpha": 1}
+    default_kwargs = {"ls": "-", "color": "r", "lw": 1.2, "alpha": 1, "zorder": -1}
     default_kwargs.update(kwargs)
 
     # Default label offsets (optimized for linear scale)
@@ -412,9 +412,12 @@ def add_polynomial_potentials(
     return line_handle
 
 
-def add_efold_shading(ax, N_range=(47, 57), ns_range=(0.96, 1.0), **kwargs):
+def add_efold_shading_monomial(ax, N_range=(47, 57), ns_range=(0.96, 1.0), **kwargs):
     """
-    Add shaded region showing e-fold range for polynomial potentials.
+    Add shaded region showing e-fold range for monomial potentials V ∝ φⁿ.
+
+    This shading is only mathematically valid for monomial (power-law) potentials.
+    For other potential shapes, the N* constraints may differ.
 
     Parameters
     ----------
@@ -432,7 +435,7 @@ def add_efold_shading(ax, N_range=(47, 57), ns_range=(0.96, 1.0), **kwargs):
     PolyCollection
         The shaded region
     """
-    default_kwargs = {"lw": 1, "facecolor": "0.8", "edgecolor": "0.6", "zorder": -1}
+    default_kwargs = {"lw": 1, "facecolor": "0.8", "edgecolor": "0.6", "zorder": -10}
     default_kwargs.update(kwargs)
 
     ns = np.linspace(ns_range[0], ns_range[1], 100)
@@ -450,7 +453,7 @@ def add_alpha_unity_model_markers(ax, models=None, return_handles=False):
     Add markers for specific inflation models (Starobinsky, Higgs, etc.).
 
     Supports both single N* values (displayed as scatter points) and
-    N* ranges (displayed as lines with markers at endpoints).
+    N* ranges (displayed as markers at min/max with connecting line).
 
     Parameters
     ----------
@@ -466,14 +469,6 @@ def add_alpha_unity_model_markers(ax, models=None, return_handles=False):
     tuple or None
         If return_handles=True: (handles, labels) lists for legend
         If return_handles=False: None
-
-    Notes
-    -----
-    Models with N* ranges (like Starobinsky R²) are automatically given
-    the appropriate legend handler when using add_model_handlers_to_legend().
-
-    N* values are defined in ALPHA_UNITY_MODELS.
-    Styling (colors, markers, etc.) is defined in plot_style.alpha_unity_style_dict.
     """
     if models is None:
         models = list(ALPHA_UNITY_MODELS.keys())
@@ -493,28 +488,66 @@ def add_alpha_unity_model_markers(ax, models=None, return_handles=False):
         # Get styling from plot_style
         style_dict = alpha_unity_style_dict[model_name]
 
-        # Calculate r and ns for alpha=1 models: r = 12/N^2, ns = 1 - 2/N
-        this_r = 12 / N_star**2
-        this_ns = 1 - 2 / N_star
-
         # Get label with N* info
         label = get_alpha_unity_label(model_name)
 
-        if len(N_star) > 1:
-            # Range: plot as line with markers at endpoints
-            plot_kwargs = {
-                "color": style_dict["color"],
-                "lw": style_dict["lw"],
-                "marker": style_dict["marker"],
-                "ms": style_dict["ms"],
-            }
-            line = ax.plot(this_ns, this_r, **plot_kwargs, label=label)
+        if len(N_star) == 2:
+            # Range: plot markers at min and max only, with connecting line
+            N_min, N_max = N_star[0], N_star[1]
+
+            # Calculate r and ns for alpha=1 models: r = 12/N^2, ns = 1 - 2/N
+            ns_values = 1 - 2 / np.array([N_min, N_max])
+            r_values = 12 / np.array([N_min, N_max]) ** 2
+
+            # Plot connecting line
+            line = ax.plot(
+                ns_values,
+                r_values,
+                color="k",
+                lw=style_dict["lw"],
+                zorder=999998,
+            )[0]
+
+            # Plot markers at endpoints
+            scatter = ax.scatter(
+                ns_values,
+                r_values,
+                marker=style_dict["marker"],
+                s=style_dict["s"],
+                c=style_dict["color"],
+                edgecolors=style_dict["edgecolor"],
+                linewidths=1.2,
+                label=label,
+                zorder=999999,
+            )
 
             if return_handles:
-                handles.append(line[0])
+                handles.append(scatter)
+                labels.append(label)
+
+        elif len(N_star) > 2:
+            # Multiple values: plot all with line
+            this_r = 12 / N_star**2
+            this_ns = 1 - 2 / N_star
+
+            line = ax.plot(
+                this_ns,
+                this_r,
+                color=style_dict["color"],
+                lw=style_dict["lw"],
+                marker=style_dict["marker"],
+                ms=style_dict["ms"],
+                label=label,
+            )[0]
+
+            if return_handles:
+                handles.append(line)
                 labels.append(label)
         else:
             # Single point: plot as scatter
+            this_r = 12 / N_star**2
+            this_ns = 1 - 2 / N_star
+
             scatter_kwargs = {
                 k: v for k, v in style_dict.items() if k not in ["lw", "ms"]
             }
