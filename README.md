@@ -9,7 +9,7 @@ Tou can also try the **[online plotting app](https://r-ns-plot.streamlit.app/)**
 
 ## Making $r$ - $n_s$ Plots
 
-To make your own $r$ - $n_s$ plots you can use the **[online plotting app](https://r-ns-plot.streamlit.app/)** (no installation required!).
+To make your own $r$ - $n_s$ plots you can use the **[online plotting app](https://r-ns-plot.streamlit.app/)** (no download or installation required).
 The app allows you to:
 - Toggle between different data constraints and forecasts
 - Add your own forecast contours
