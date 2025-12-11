@@ -739,14 +739,15 @@ if estimated_pixels > MAX_SAFE_PIXELS:
 # Use lower DPI for display to prevent memory issues on Streamlit Cloud
 if plot_width == 100:
     # Full width - use single column
-    st.pyplot(plt.gcf(), dpi=DISPLAY_DPI, use_container_width=True)
+    st.pyplot(plt.gcf(), dpi=DISPLAY_DPI, use_container_width=True, facecolor="white")
 else:
     # Use three columns with proper ratios
     left_width = (100 - plot_width) / 2
     col1, col2, col3 = st.columns([left_width, plot_width, left_width])
     with col2:
-        st.pyplot(plt.gcf(), dpi=DISPLAY_DPI, use_container_width=True)
-
+        st.pyplot(
+            plt.gcf(), dpi=DISPLAY_DPI, use_container_width=True, facecolor="white"
+        )
 
 # ============================================================================
 # Download Options
