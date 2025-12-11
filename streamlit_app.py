@@ -28,6 +28,14 @@ from legend_utils import (
     add_alpha_attractor_legend_entry,
 )
 
+plt.rcParams.update(
+    {
+        "text.usetex": False,
+        "font.family": "sans-serif",
+        "mathtext.fontset": "dejavusans",
+    }
+)
+
 rgw_str = "r"
 ns_str = "n_s"
 N_star_str = "N_{\\star}"
