@@ -40,7 +40,7 @@ st.set_page_config(page_title="r-ns Plot Generator", page_icon="🎨", layout="w
 
 st.title("Interactive r-ns Plot Generator")
 st.markdown(
-    "For best performance, wait for changes to appear in the plot before modifying further."
+    "For best performance, wait for changes to appear in the plot before modifying further. The resolution is kept low to boost performance; downloads (pdf, png) are high res."
 )
 st.markdown(
     "When using this tool for publications (see export options at the bottom of the sidebar), please cite TBD, link to this webpage, and cite the appropriate publications for any data constraints you may be showing."
@@ -51,7 +51,7 @@ import matplotlib
 
 matplotlib.rcParams["figure.max_open_warning"] = 0
 # Limit DPI for display (exports can use higher DPI)
-DISPLAY_DPI = 100  # Lower DPI for Streamlit display
+DISPLAY_DPI = 150  # Lower DPI for Streamlit display
 
 # ============================================================================
 # Load Data (cached for performance)
