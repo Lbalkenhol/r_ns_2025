@@ -51,7 +51,7 @@ import matplotlib
 
 matplotlib.rcParams["figure.max_open_warning"] = 0
 # Limit DPI for display (exports can use higher DPI)
-DISPLAY_DPI = 200  # Lower DPI for Streamlit display
+DISPLAY_DPI = 100  # Lower DPI for Streamlit display
 
 # ============================================================================
 # Load Data (cached for performance)
