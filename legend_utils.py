@@ -128,7 +128,7 @@ def add_monomial_legend_entry(
         )
     else:
         label = (
-            r"$V(\phi) \propto \phi^{n},\, n=1, \frac{2}{3}, \frac{1}{3}$"
+            r"$V(\phi) \propto \phi^{n},\, n=1, 2/3, 1/3$"
             + f"\n(${N_range[0]}\\leq\\! N_\\star\\!\\leq {N_range[1]}$)"
         )
 

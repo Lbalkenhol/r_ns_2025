@@ -671,7 +671,7 @@ if needs_advanced_legend:
                 handler_map,
                 N_range=(N_min, N_max),
                 yoffset=yoffset,
-                use_sfrac=not st.session_state.sfrac_failed,
+                use_sfrac=False,
             )
         elif show_efold:
             # Only shading: show grey rectangle with V∝φⁿ (no specific exponents)
