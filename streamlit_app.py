@@ -240,6 +240,12 @@ if use_log_scale != st.session_state.use_log_scale:
         st.session_state.r_min = 0.0
         st.session_state.r_max = 0.1
     st.session_state.use_log_scale = use_log_scale
+    st.rerun()
+
+# Additional safety check: if log scale is on but r_min is invalid, fix it
+if use_log_scale and st.session_state.r_min <= 0:
+    st.session_state.r_min = 3e-4
+    st.rerun()
 
 ns_min = st.sidebar.number_input(
     f"${ns_str}$ min",
@@ -310,16 +316,16 @@ show_spa_bk_desi = st.sidebar.checkbox("SPA+BK+DESI", value=True)
 # Forecast selection
 st.sidebar.subheader("Forecasts")
 show_fc = st.sidebar.checkbox(
-    f"CMB 2030s (${{\small {ns_str}=\mu^{{SPA+BK}}}}$)", value=False
+    f"CMB 2030s (${{\\small {ns_str}=\\mu^{{SPA+BK}}}}$)", value=False
 )
 st.sidebar.markdown(
-    f"$${{\small {rgw_str}\\sim\\mathcal{{N}}(3\\times 10^{{-3}},10^{{-3}}),}}\\\\{{\small {ns_str}\\sim\\mathcal{{N}}(\\mu^{{SPA+BK}}, 2\\times 10^{{-3}})}}$$"
+    f"$${{\\small {rgw_str}\\sim\\mathcal{{N}}(3\\times 10^{{-3}},10^{{-3}}),}}\\\\{{\\small {ns_str}\\sim\\mathcal{{N}}(\\mu^{{SPA+BK}}, 2\\times 10^{{-3}})}}$$"
 )
 show_fc_desi = st.sidebar.checkbox(
-    f"CMB 2030s (${{\small {ns_str}=\\mu^{{SPA+BK+DESI}}}}$)", value=False
+    f"CMB 2030s (${{\\small {ns_str}=\\mu^{{SPA+BK+DESI}}}}$)", value=False
 )
 st.sidebar.markdown(
-    f"$${{\small {rgw_str}\\sim\\mathcal{{N}}(3\\times 10^{{-3}},10^{{-3}}),}}\\\\{{\small {ns_str}\\sim\\mathcal{{N}}(\\mu^{{SPA+BK+DESI}}, 2\\times 10^{{-3}})}}$$"
+    f"$${{\\small {rgw_str}\\sim\\mathcal{{N}}(3\\times 10^{{-3}},10^{{-3}}),}}\\\\{{\\small {ns_str}\\sim\\mathcal{{N}}(\\mu^{{SPA+BK+DESI}}, 2\\times 10^{{-3}})}}$$"
 )
 
 # Custom forecast
@@ -733,20 +739,24 @@ if needs_advanced_legend:
         ncol=1,
     )
 
-# Set axis properties
-ax.set_ylim((r_min, r_max))
-ax.set_xlim((ns_min, ns_max))
-
-# Apply log scale if requested
+# Apply log scale if requested (MUST be done BEFORE setting limits)
 if use_log_scale:
     ax.set_yscale("log")
+    # Validate that r_min is positive for log scale
+    if r_min <= 0:
+        r_min = 3e-4  # Safe default for log scale
     # Add minor ticks for log scale
     from matplotlib.ticker import LogLocator
 
     ax.yaxis.set_minor_locator(LogLocator(subs="auto"))
 else:
     ax.yaxis.set_minor_locator(AutoMinorLocator())
+
 ax.xaxis.set_minor_locator(AutoMinorLocator())
+
+# Set axis properties (AFTER setting scale)
+ax.set_ylim((r_min, r_max))
+ax.set_xlim((ns_min, ns_max))
 
 # Set axis ticks and spines to foreground
 ax.set_axisbelow(False)
@@ -786,7 +796,7 @@ def display_plot(container=None):
     kwargs = dict(
         clear_figure=True,
         dpi=DISPLAY_DPI,
-        use_container_width=True,
+        width="stretch",
         facecolor="white",
     )
     target = container if container else st
