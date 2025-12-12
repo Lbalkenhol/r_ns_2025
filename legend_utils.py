@@ -96,7 +96,12 @@ def create_dummy_plot_elements_for_legend(all_dat, return_entries=False):
 
 
 def add_monomial_legend_entry(
-    legend_handles, legend_labels, handler_map, N_range=(47, 57), yoffset=0.0
+    legend_handles,
+    legend_labels,
+    handler_map,
+    N_range=(47, 57),
+    yoffset=0.0,
+    use_sfrac=True,
 ):
     """
     Add a monomial potential legend entry with custom handler.
@@ -113,11 +118,19 @@ def add_monomial_legend_entry(
         (N_min, N_max) e-fold range for label
     yoffset : float
         Vertical offset for multiline entries
+    use_sfrac : bool
+        Whether to use \\sfrac for fractions (nicer but can fail on some servers)
     """
-    label = (
-        r"$V(\phi) \propto \phi^{n},\, n=1, \sfrac{2}{3}, \sfrac{1}{3}$"
-        + f"\n(${N_range[0]}\\leq\\! N_\\star\\!\\leq {N_range[1]}$)"
-    )
+    if use_sfrac:
+        label = (
+            r"$V(\phi) \propto \phi^{n},\, n=1, \sfrac{2}{3}, \sfrac{1}{3}$"
+            + f"\n(${N_range[0]}\\leq\\! N_\\star\\!\\leq {N_range[1]}$)"
+        )
+    else:
+        label = (
+            r"$V(\phi) \propto \phi^{n},\, n=1, \frac{2}{3}, \frac{1}{3}$"
+            + f"\n(${N_range[0]}\\leq\\! N_\\star\\!\\leq {N_range[1]}$)"
+        )
 
     dummy_handle = plt.Line2D([], [], color="k")
     legend_handles.append(dummy_handle)

@@ -49,6 +49,8 @@ st.markdown(
 # Set reasonable limits for image rendering to prevent crashes
 import matplotlib
 from PIL import Image
+import shutil
+import os
 
 # Increase PIL's pixel limit to prevent DecompressionBomb errors
 Image.MAX_IMAGE_PIXELS = 80_000_000
@@ -56,6 +58,43 @@ Image.MAX_IMAGE_PIXELS = 80_000_000
 matplotlib.rcParams["figure.max_open_warning"] = 0
 # Limit DPI for display (exports can use higher DPI)
 DISPLAY_DPI = 150  # Lower DPI for Streamlit display
+
+
+def clear_tex_cache():
+    """Clear matplotlib's TeX cache to fix corrupted font files."""
+    try:
+        tex_cache = matplotlib.get_cachedir()
+        tex_dir = os.path.join(tex_cache, "tex.cache")
+        if os.path.exists(tex_dir):
+            shutil.rmtree(tex_dir)
+        # Also clear any .dvi files in the cache
+        for f in os.listdir(tex_cache):
+            if f.endswith((".dvi", ".tex", ".log", ".aux")):
+                os.remove(os.path.join(tex_cache, f))
+    except Exception:
+        pass  # Silently ignore if we can't clear cache
+
+
+# Track if \sfrac rendering has failed (use fallback fractions)
+if "sfrac_failed" not in st.session_state:
+    st.session_state.sfrac_failed = False
+
+
+def get_monomial_label(N_min, N_max):
+    """Get monomial legend label, with fallback if sfrac fails."""
+    if st.session_state.sfrac_failed:
+        # Fallback: use regular fractions
+        return (
+            r"$V(\phi) \propto \phi^{n},\, n=1, \frac{2}{3}, \frac{1}{3}$"
+            + f"\n(${N_min}\\leq\\! N_\\star\\!\\leq {N_max}$)"
+        )
+    else:
+        # Preferred: use sfrac for nicer inline fractions
+        return (
+            r"$V(\phi) \propto \phi^{n},\, n=1, \sfrac{2}{3}, \sfrac{1}{3}$"
+            + f"\n(${N_min}\\leq\\! N_\\star\\!\\leq {N_max}$)"
+        )
+
 
 # ============================================================================
 # Load Data (cached for performance)
@@ -349,7 +388,7 @@ st.sidebar.header("Theory Elements")
 st.sidebar.subheader("Concave/Convex")
 show_divide = st.sidebar.checkbox("Dividing line", value=True)
 if show_divide:
-    show_labels = st.sidebar.checkbox("Labels", value=True)
+    show_labels = st.sidebar.checkbox("Labels", value=False)
 else:
     show_labels = False
 
@@ -359,7 +398,7 @@ show_monomial = st.sidebar.checkbox("Show monomial potentials", value=True)
 if show_monomial:
     st.sidebar.markdown("$$\\small V(\\phi) \\propto \\phi^{n}$$")
     show_efold = st.sidebar.checkbox(f"$${N_star_str}$$ shading", value=True)
-    show_monomial_lines = st.sidebar.checkbox("Example potentials", value=True)
+    show_monomial_lines = st.sidebar.checkbox("Example potentials", value=False)
     st.sidebar.markdown("$$\\small n=1, \\frac{2}{3}, \\frac{1}{3}$$")
 
     if show_efold or show_monomial_lines:
@@ -631,6 +670,7 @@ if needs_advanced_legend:
                 handler_map,
                 N_range=(N_min, N_max),
                 yoffset=yoffset,
+                use_sfrac=not st.session_state.sfrac_failed,
             )
         elif show_efold:
             # Only shading: show grey rectangle with V∝φⁿ (no specific exponents)
@@ -647,10 +687,7 @@ if needs_advanced_legend:
 
             dummy_handle = Line2D([], [], color="r", lw=1.2)
             legend_handles.append(dummy_handle)
-            legend_labels.append(
-                r"$V(\phi) \propto \phi^{n},\, n=1, \sfrac{2}{3}, \sfrac{1}{3}$"
-                + f"\n(${N_min}\\leq\\! N_\\star\\!\\leq {N_max}$)"
-            )
+            legend_labels.append(get_monomial_label(N_min, N_max))
 
     # Get model handles from the plot
     model_handles, model_labels = add_alpha_unity_model_markers(
@@ -742,29 +779,49 @@ if estimated_pixels > MAX_SAFE_PIXELS:
     )
     st.stop()
 
-# Display plot in Streamlit with adjustable width and controlled DPI
-# Use lower DPI for display to prevent memory issues on Streamlit Cloud
-if plot_width == 100:
-    # Full width - use single column
-    st.pyplot(
-        plt.gcf(),
+
+def display_plot(container=None):
+    """Display the plot with error handling for TeX cache corruption."""
+    kwargs = dict(
         clear_figure=True,
         dpi=DISPLAY_DPI,
         use_container_width=True,
         facecolor="white",
     )
+    target = container if container else st
+
+    try:
+        target.pyplot(plt.gcf(), **kwargs)
+    except ValueError as e:
+        if "vf file" in str(e) or "Misplaced packet" in str(e):
+            # TeX cache corruption - clear cache and fall back to simpler fractions
+            clear_tex_cache()
+            if not st.session_state.sfrac_failed:
+                # First failure: switch to fallback fractions and retry
+                st.session_state.sfrac_failed = True
+                st.warning(
+                    "Detected font rendering issue, switching to fallback mode..."
+                )
+                st.rerun()
+            else:
+                # Already in fallback mode - show error
+                st.error("LaTeX rendering error. Please try refreshing the page.")
+                raise
+        else:
+            raise
+
+
+# Display plot in Streamlit with adjustable width and controlled DPI
+# Use lower DPI for display to prevent memory issues on Streamlit Cloud
+if plot_width == 100:
+    # Full width - use single column
+    display_plot()
 else:
     # Use three columns with proper ratios
     left_width = (100 - plot_width) / 2
     col1, col2, col3 = st.columns([left_width, plot_width, left_width])
     with col2:
-        st.pyplot(
-            plt.gcf(),
-            clear_figure=True,
-            dpi=DISPLAY_DPI,
-            use_container_width=True,
-            facecolor="white",
-        )
+        display_plot(col2)
 
 # ============================================================================
 # Download Options
