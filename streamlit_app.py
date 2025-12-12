@@ -43,7 +43,7 @@ st.markdown(
     "For best performance, wait for changes to appear in the plot before modifying further. The resolution is kept low to boost performance; downloads (pdf, png) are high res."
 )
 st.markdown(
-    "When using this tool for publications (see export options at the bottom of the sidebar), please cite TBD, link to this webpage, and cite the appropriate publications for any data constraints you may be showing."
+    "When using this tool for publications (see export options at the bottom of the sidebar), please cite [Balkenhol et al. 2025](https://arxiv.org/abs/2512.10613), link to this webpage, and cite the appropriate publications for any data constraints you may be showing."
 )
 
 # Set reasonable limits for image rendering to prevent crashes

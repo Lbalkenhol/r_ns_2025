@@ -1,10 +1,10 @@
 # Inflation in 2025:<br>Constraints on $r$ and $n_s$ using the latest CMB and BAO data
 
-This repository accompanies [TBD paper](TBD), which presents constraints on the tensor-to-scalar ratio $r$ and the scalar spectral index $n_s$ based on the latest cosmic microwave background (CMB) and baryon acoustic oscillation (BAO) data available in 2025.
+This repository accompanies [Balkenhol et al. 2025](https://arxiv.org/abs/2512.10613), which presents constraints on the tensor-to-scalar ratio $r$ and the scalar spectral index $n_s$ based on the latest cosmic microwave background (CMB) and baryon acoustic oscillation (BAO) data available in 2025.
 Here, you can find the data products of the Monte Carlo Markov Chain analysis performed in the paper as well as plotting scripts that allow you to reproduce the paper plots and make your own modified versions.
 Tou can also try the **[online plotting app](https://r-ns-plot.streamlit.app/)** (currently still experimental) - no download or installation required.
 
-[![Paper](https://img.shields.io/badge/arXiv-TBD-b31b1b.svg)](TBD)
+[![Paper](https://img.shields.io/badge/arXiv-2512.10613-b31b1b.svg)](https://arxiv.org/abs/2512.10613)
 [![Streamlit App](https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit)](https://r-ns-plot.streamlit.app/)
 
 ## Making $r$ - $n_s$ Plots
@@ -76,7 +76,7 @@ r_ns_2025/
 
 ## Citing this work
 
-If you use this code or the provided data constraints in your research, please cite the release paper.
+If you use this code or the provided data constraints in your research, please cite the release paper [Balkenhol et al. 2025](https://arxiv.org/abs/2512.10613).
 If you use the online plotting app, please include a link to it as a footnote.
 When showing data constraints in your plots, please also cite the associated paper.
 
