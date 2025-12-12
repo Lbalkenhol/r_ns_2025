@@ -812,6 +812,28 @@ def display_plot(container=None):
             raise
 
 
+# ============================================================================
+# Prepare Export Buffers (BEFORE displaying, since display clears the figure)
+# ============================================================================
+
+import io
+
+# Get the current figure dimensions for export
+fig = plt.gcf()
+fig_width, fig_height = fig.get_size_inches()
+
+# Set reasonable DPI limits to avoid oversized images
+max_dpi = min(400, int(65000 / max(fig_width, fig_height)))
+
+# Save figure to buffers BEFORE displaying (display_plot clears the figure)
+pdf_buffer = io.BytesIO()
+fig.savefig(pdf_buffer, format="pdf", bbox_inches="tight", dpi=max_dpi)
+pdf_buffer.seek(0)
+
+png_buffer = io.BytesIO()
+fig.savefig(png_buffer, format="png", bbox_inches="tight", dpi=max_dpi)
+png_buffer.seek(0)
+
 # Display plot in Streamlit with adjustable width and controlled DPI
 # Use lower DPI for display to prevent memory issues on Streamlit Cloud
 if plot_width == 100:
@@ -1159,26 +1181,8 @@ plt.savefig("r_ns_plot.pdf", bbox_inches='tight', dpi=400)
 plt.show()
 """
 
-# Save current figure to bytes for PDF download
-import io
-
-# Get the current figure dimensions
-fig = plt.gcf()
-fig_width, fig_height = fig.get_size_inches()
-
-# Set reasonable DPI limits to avoid oversized images
-max_dpi = min(400, int(65000 / max(fig_width, fig_height)))
-
-pdf_buffer = io.BytesIO()
-fig.savefig(pdf_buffer, format="pdf", bbox_inches="tight", dpi=max_dpi)
-pdf_buffer.seek(0)
-
-# Save current figure to bytes for PNG download
-png_buffer = io.BytesIO()
-fig.savefig(png_buffer, format="png", bbox_inches="tight", dpi=max_dpi)
-png_buffer.seek(0)
-
 # Download buttons (these trigger immediate downloads)
+# Buffers were created earlier, before display_plot() cleared the figure
 st.sidebar.download_button(
     label="Download as PDF",
     data=pdf_buffer,
