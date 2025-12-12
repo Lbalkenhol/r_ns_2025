@@ -81,17 +81,17 @@ if "sfrac_failed" not in st.session_state:
 
 
 def get_monomial_label(N_min, N_max):
-    """Get monomial legend label, with fallback if sfrac fails."""
+    """Get monomial legend label, with fallback if sfrac fails. sfrac is seeming to cause some trouble so it has been taken out for now."""
     if st.session_state.sfrac_failed:
         # Fallback: use regular fractions
         return (
-            r"$V(\phi) \propto \phi^{n},\, n=1, \frac{2}{3}, \frac{1}{3}$"
+            r"$V(\phi) \propto \phi^{n},\, n=1, 2/3, 1/3$"
             + f"\n(${N_min}\\leq\\! N_\\star\\!\\leq {N_max}$)"
         )
     else:
         # Preferred: use sfrac for nicer inline fractions
         return (
-            r"$V(\phi) \propto \phi^{n},\, n=1, \sfrac{2}{3}, \sfrac{1}{3}$"
+            r"$V(\phi) \propto \phi^{n},\, n=1, 2/3, 1/3$"
             + f"\n(${N_min}\\leq\\! N_\\star\\!\\leq {N_max}$)"
         )
 
@@ -1113,7 +1113,7 @@ legend_labels.append('$V(\\\\phi) \\\\propto \\\\phi^n$\\n(${N_min}\\\\leq\\\\! 
             code += f"""from matplotlib.lines import Line2D
 dummy_handle = Line2D([], [], color='r', lw=1.2)
 legend_handles.append(dummy_handle)
-legend_labels.append(r'$V(\\phi) \\propto \\phi^{{n}},\\, n=1, \\sfrac{{2}}{{3}}, \\sfrac{{1}}{{3}}$' + '\\n(${N_min}\\\\leq\\\\! N_\\\\star\\\\!\\\\leq {N_max}$)')
+legend_labels.append(r'$V(\\phi) \\propto \\phi^{{n}},\\, n=1, 2/3, 1/3$' + '\\n(${N_min}\\\\leq\\\\! N_\\\\star\\\\!\\\\leq {N_max}$)')
 """
 
     if show_starobinsky or show_higgs:
