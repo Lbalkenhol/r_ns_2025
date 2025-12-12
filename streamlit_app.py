@@ -48,6 +48,10 @@ st.markdown(
 
 # Set reasonable limits for image rendering to prevent crashes
 import matplotlib
+from PIL import Image
+
+# Increase PIL's pixel limit to prevent DecompressionBomb errors
+Image.MAX_IMAGE_PIXELS = 80_000_000
 
 matplotlib.rcParams["figure.max_open_warning"] = 0
 # Limit DPI for display (exports can use higher DPI)
@@ -493,6 +497,9 @@ if show_fc_desi:
 if show_custom:
     all_dat.append("CUSTOM")
 
+# Close any existing figures to prevent memory accumulation
+plt.close("all")
+
 # Create GetDist plotter (this properly initializes the figure)
 plot_width_inch = 6.928 / 2 if single_column else 6.928
 g = plots.get_single_plotter(width_inch=plot_width_inch, ratio=1 / aspect_ratio)
@@ -739,14 +746,24 @@ if estimated_pixels > MAX_SAFE_PIXELS:
 # Use lower DPI for display to prevent memory issues on Streamlit Cloud
 if plot_width == 100:
     # Full width - use single column
-    st.pyplot(plt.gcf(), dpi=DISPLAY_DPI, use_container_width=True, facecolor="white")
+    st.pyplot(
+        plt.gcf(),
+        clear_figure=True,
+        dpi=DISPLAY_DPI,
+        use_container_width=True,
+        facecolor="white",
+    )
 else:
     # Use three columns with proper ratios
     left_width = (100 - plot_width) / 2
     col1, col2, col3 = st.columns([left_width, plot_width, left_width])
     with col2:
         st.pyplot(
-            plt.gcf(), dpi=DISPLAY_DPI, use_container_width=True, facecolor="white"
+            plt.gcf(),
+            clear_figure=True,
+            dpi=DISPLAY_DPI,
+            use_container_width=True,
+            facecolor="white",
         )
 
 # ============================================================================
