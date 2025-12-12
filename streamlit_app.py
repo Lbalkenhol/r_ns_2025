@@ -543,6 +543,7 @@ plt.close("all")
 plot_width_inch = 6.928 / 2 if single_column else 6.928
 g = plots.get_single_plotter(width_inch=plot_width_inch, ratio=1 / aspect_ratio)
 g.settings.legend_frame = False
+g.settings.tight_layout = False
 
 # Plot data constraints using GetDist
 if len(all_dat) > 0:
@@ -960,6 +961,7 @@ g = plots.get_single_plotter(width_inch="""
 
 code += f"""{plot_width_inch:.3f}, ratio={1/aspect_ratio:.2f})
 g.settings.legend_frame = False
+g.settings.tight_layout = False
 
 # Plot data constraints
 all_dat = ["""
