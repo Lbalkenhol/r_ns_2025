@@ -5,6 +5,13 @@ Run locally with: streamlit run streamlit_app.py
 
 import streamlit as st
 import numpy as np
+import gc
+
+# Force non-interactive backend BEFORE importing pyplot
+import matplotlib
+
+matplotlib.use("Agg")
+
 import matplotlib.pyplot as plt
 from matplotlib.ticker import AutoMinorLocator
 
@@ -47,7 +54,6 @@ st.markdown(
 )
 
 # Set reasonable limits for image rendering to prevent crashes
-import matplotlib
 from PIL import Image
 import shutil
 import os
@@ -55,9 +61,27 @@ import os
 # Increase PIL's pixel limit to prevent DecompressionBomb errors
 Image.MAX_IMAGE_PIXELS = 80_000_000
 
+# Configure matplotlib for stability
 matplotlib.rcParams["figure.max_open_warning"] = 0
+# Disable external LaTeX compiler to prevent hangs - mathtext still renders $...$ equations
+matplotlib.rcParams["text.usetex"] = False
+matplotlib.rcParams["svg.fonttype"] = "none"
+
 # Limit DPI for display (exports can use higher DPI)
 DISPLAY_DPI = 150  # Lower DPI for Streamlit display
+EXPORT_DPI = 300  # Reasonable DPI for exports
+
+
+def cleanup_matplotlib():
+    """Aggressively clean up matplotlib resources."""
+    try:
+        plt.close("all")
+        # Clear any cached figures from getdist
+        if hasattr(plots, "_default_settings"):
+            plots._default_settings = None
+        gc.collect()
+    except Exception:
+        pass
 
 
 def clear_tex_cache():
@@ -78,6 +102,16 @@ def clear_tex_cache():
 # Track if \sfrac rendering has failed (use fallback fractions)
 if "sfrac_failed" not in st.session_state:
     st.session_state.sfrac_failed = False
+
+# Track render count to periodically force cleanup
+if "render_count" not in st.session_state:
+    st.session_state.render_count = 0
+st.session_state.render_count += 1
+
+# Every 50 renders, do aggressive cleanup
+if st.session_state.render_count % 50 == 0:
+    cleanup_matplotlib()
+    gc.collect()
 
 
 def get_monomial_label(N_min, N_max):
@@ -101,7 +135,7 @@ def get_monomial_label(N_min, N_max):
 # ============================================================================
 
 
-@st.cache_data
+@st.cache_data(ttl=2 * 60 * 60)  # Cache for 2 hours, then refresh
 def load_chains():
     """Load MCMC chains (cached to avoid reloading on every interaction)."""
     chain_files = {
@@ -116,7 +150,7 @@ def load_chains():
     return chains
 
 
-@st.cache_data
+@st.cache_data(ttl=2 * 60 * 60)  # Cache for 2 hours, then refresh
 def create_forecast_chains():
     """Create forecast chains (cached)."""
     chains = load_chains()
@@ -428,7 +462,7 @@ st.sidebar.subheader("Starobinsky $R^2$")
 show_starobinsky = st.sidebar.checkbox("Show Starobinsky $R^2$", value=False)
 if show_starobinsky:
     starobinsky_mode = st.sidebar.radio(
-        "",  # Empty label - removed "Display mode"
+        "\u00a0",  # Non-breaking space to satisfy label requirement
         ["Single $N_\\star$", "$N_\\star$ range"],
         key="starobinsky_mode",
         label_visibility="collapsed",
@@ -453,7 +487,7 @@ st.sidebar.subheader("Higgs Inflation")
 show_higgs = st.sidebar.checkbox("Show Higgs inflation", value=False)
 if show_higgs:
     higgs_mode = st.sidebar.radio(
-        "",  # Empty label - removed "Display mode"
+        "\u00a0",  # Non-breaking space to satisfy label requirement
         ["Single $N_\\star$", "$N_\\star$ range"],
         label_visibility="collapsed",
         key="higgs_mode",
@@ -542,14 +576,19 @@ if show_fc_desi:
 if show_custom:
     all_dat.append("CUSTOM")
 
-# Close any existing figures to prevent memory accumulation
-plt.close("all")
+# Aggressive cleanup before creating new figure
+cleanup_matplotlib()
 
 # Create GetDist plotter (this properly initializes the figure)
 plot_width_inch = 6.928 / 2 if single_column else 6.928
-g = plots.get_single_plotter(width_inch=plot_width_inch, ratio=1 / aspect_ratio)
-g.settings.legend_frame = False
-g.settings.tight_layout = False
+try:
+    g = plots.get_single_plotter(width_inch=plot_width_inch, ratio=1 / aspect_ratio)
+    g.settings.legend_frame = False
+    g.settings.tight_layout = False
+except Exception as e:
+    st.error(f"Error creating plot: {e}")
+    cleanup_matplotlib()
+    st.stop()
 
 # Plot data constraints using GetDist
 if len(all_dat) > 0:
@@ -619,7 +658,7 @@ if show_custom_marker:
         c="orange",
         edgecolors="k",
         linewidths=0.5,
-        zorder=10,
+        zorder=9999999999999,
         label=custom_marker_label,
     )
 
@@ -794,7 +833,7 @@ if estimated_pixels > MAX_SAFE_PIXELS:
 def display_plot(container=None):
     """Display the plot with error handling for TeX cache corruption."""
     kwargs = dict(
-        clear_figure=True,
+        clear_figure=True,  # Don't clear yet - we need it for export
         dpi=DISPLAY_DPI,
         width="stretch",
         facecolor="white",
@@ -807,6 +846,7 @@ def display_plot(container=None):
         if "vf file" in str(e) or "Misplaced packet" in str(e):
             # TeX cache corruption - clear cache and fall back to simpler fractions
             clear_tex_cache()
+            cleanup_matplotlib()
             if not st.session_state.sfrac_failed:
                 # First failure: switch to fallback fractions and retry
                 st.session_state.sfrac_failed = True
@@ -819,7 +859,23 @@ def display_plot(container=None):
                 st.error("LaTeX rendering error. Please try refreshing the page.")
                 raise
         else:
+            cleanup_matplotlib()
             raise
+    except Exception as e:
+        cleanup_matplotlib()
+        raise
+
+
+def safe_savefig(fig, buffer, format_type, dpi):
+    """Safely save figure with error handling."""
+    try:
+        fig.savefig(buffer, format=format_type, bbox_inches="tight", dpi=dpi)
+        buffer.seek(0)
+        return True
+    except Exception as e:
+        # Don't show warning here - it's noisy on every page load
+        # The download button will just be disabled
+        return False
 
 
 # ============================================================================
@@ -832,17 +888,15 @@ import io
 fig = plt.gcf()
 fig_width, fig_height = fig.get_size_inches()
 
-# Set reasonable DPI limits to avoid oversized images
-max_dpi = min(400, int(65000 / max(fig_width, fig_height)))
+# Use more conservative DPI for exports to prevent memory issues
+max_dpi = min(EXPORT_DPI, int(50000 / max(fig_width, fig_height)))
 
-# Save figure to buffers BEFORE displaying (display_plot clears the figure)
+# Save figure to buffers BEFORE displaying with timeout protection
 pdf_buffer = io.BytesIO()
-fig.savefig(pdf_buffer, format="pdf", bbox_inches="tight", dpi=max_dpi)
-pdf_buffer.seek(0)
+pdf_success = safe_savefig(fig, pdf_buffer, "pdf", max_dpi)
 
 png_buffer = io.BytesIO()
-fig.savefig(png_buffer, format="png", bbox_inches="tight", dpi=max_dpi)
-png_buffer.seek(0)
+png_success = safe_savefig(fig, png_buffer, "png", max_dpi)
 
 # Display plot in Streamlit with adjustable width and controlled DPI
 # Use lower DPI for display to prevent memory issues on Streamlit Cloud
@@ -1193,19 +1247,25 @@ plt.show()
 
 # Download buttons (these trigger immediate downloads)
 # Buffers were created earlier, before display_plot() cleared the figure
-st.sidebar.download_button(
-    label="Download as PDF",
-    data=pdf_buffer,
-    file_name="r_ns_plot.pdf",
-    mime="application/pdf",
-)
+if pdf_success:
+    st.sidebar.download_button(
+        label="Download as PDF",
+        data=pdf_buffer,
+        file_name="r_ns_plot.pdf",
+        mime="application/pdf",
+    )
+else:
+    st.sidebar.button("PDF export failed", disabled=True)
 
-st.sidebar.download_button(
-    label="Download as PNG",
-    data=png_buffer,
-    file_name="r_ns_plot.png",
-    mime="image/png",
-)
+if png_success:
+    st.sidebar.download_button(
+        label="Download as PNG",
+        data=png_buffer,
+        file_name="r_ns_plot.png",
+        mime="image/png",
+    )
+else:
+    st.sidebar.button("PNG export failed", disabled=True)
 
 st.sidebar.download_button(
     label="Download Python Script",
@@ -1213,3 +1273,6 @@ st.sidebar.download_button(
     file_name="custom_rns_plot_script.py",
     mime="text/x-python",
 )
+
+# Final cleanup
+cleanup_matplotlib()

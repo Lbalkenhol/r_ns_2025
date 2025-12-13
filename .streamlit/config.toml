@@ -1,0 +1,7 @@
+[runner]
+# Faster reruns for better responsiveness
+fastReruns = true
+
+[theme]
+# Use light theme as default
+base = "light"
