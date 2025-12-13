@@ -139,13 +139,13 @@ def get_monomial_label(N_min, N_max):
 def load_chains():
     """Load MCMC chains (cached to avoid reloading on every interaction)."""
     chain_files = {
-        "SPA_BK": "chains/SPA_BK/CLASS",
-        "SPA_BK_DESI": "chains/SPA_BK_DESI/CLASS",
+        "SPA_BK": "chains/SPA_BK_streamlit/CLASS",
+        "SPA_BK_DESI": "chains/SPA_BK_DESI_streamlit/CLASS",
     }
 
     chains = {}
     for key, value in chain_files.items():
-        chains[key] = loadMCSamples(value, settings={"ignore_rows": 0.2})
+        chains[key] = loadMCSamples(value, settings={"ignore_rows": 0})
 
     return chains
 
@@ -964,7 +964,7 @@ code += """}
 
 chains = {}
 for key, value in chain_files.items():
-    chains[key] = loadMCSamples(value, settings={"ignore_rows": 0.2})
+    chains[key] = loadMCSamples(value, settings={"ignore_rows": 0})
 
 """
 
