@@ -43,7 +43,8 @@ Note that these scripts come with the following requirements:
 
 ## MCMC products
 
-The `chains/` folder contains MCMC chains and best-fit points obtained using [Cobaya](https://github.com/CobayaSampler/cobaya) and [CLASS](http://class-code.net/) for $\Lambda\mathrm{CDM}+r$:
+The `chains/` folder contains MCMC chains and best-fit points obtained using [Cobaya](https://github.com/CobayaSampler/cobaya) and [CLASS](http://class-code.net/) for $\Lambda\mathrm{CDM}+r$.
+The `*_streamlit/` folders are thinned chains that are used by the web app. The `.zip` archives contain the complete chains.
 
 - **`SPA_BK/`:**
   - Primary CMB: Planck PR3 (no low-E), SPT-3G D1, ACT DR6, BK18
