@@ -963,8 +963,18 @@ if show_spa_bk or show_spa_bk_desi:
 code += """}
 
 chains = {}
-for key, value in chain_files.items():
-    chains[key] = loadMCSamples(value, settings={"ignore_rows": 0})
+try:
+    for key, value in chain_files.items():
+        chains[key] = loadMCSamples(value, settings={"ignore_rows": 0})
+except Exception as e:
+    raise FileNotFoundError(
+        f"Failed to load MCMC chains: {e}\\n\\n"
+        "The full MCMC chains are required but could not be found.\\n"
+        "Please ensure you have:\\n"
+        "  1. Downloaded the chain zip archives from the git repository\\n"
+        "  2. Unpacked them into the 'chains/' directory\\n"
+        "  3. The directory structure should be: chains/SPA_BK/CLASS.* and chains/SPA_BK_DESI/CLASS.*\\n"
+    )
 
 """
 
