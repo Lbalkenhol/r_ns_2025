@@ -2,7 +2,7 @@
 
 This repository accompanies [Balkenhol et al. 2025](https://arxiv.org/abs/2512.10613), which presents constraints on the tensor-to-scalar ratio $r$ and the scalar spectral index $n_s$ based on the latest cosmic microwave background (CMB) and baryon acoustic oscillation (BAO) data available in 2025.
 Here, you can find the data products of the Monte Carlo Markov Chain analysis performed in the paper as well as plotting scripts that allow you to reproduce the paper plots and make your own modified versions.
-Tou can also try the **[online plotting app](https://r-ns-plot.streamlit.app/)** (currently still experimental) - no download or installation required.
+Tou can also try the **[online plotting app](https://r-ns-plot.streamlit.app/)** - no download or installation required.
 
 [![Paper](https://img.shields.io/badge/arXiv-2512.10613-b31b1b.svg)](https://arxiv.org/abs/2512.10613)
 [![Streamlit App](https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit)](https://r-ns-plot.streamlit.app/)
@@ -10,7 +10,6 @@ Tou can also try the **[online plotting app](https://r-ns-plot.streamlit.app/)**
 ## Making $r$ - $n_s$ Plots
 
 To make your own $r$ - $n_s$ plots you can use the **[online plotting app](https://r-ns-plot.streamlit.app/)** (no download or installation required).
-The app is currently in an experimental phase, please raise issues.
 The app allows you to:
 - Toggle between different data constraints and forecasts
 - Add your own forecast contours
