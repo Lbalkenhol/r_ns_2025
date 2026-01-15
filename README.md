@@ -58,20 +58,30 @@ The `*_streamlit/` folders are thinned chains that are used by the web app. The 
 
 Please see the paper for more details. All chains have had 30% burn-in removed and eight parallel chains have been concatenated.
 
+## Polynomial $\alpha$ Attractors
+
+The repository contains pre-calculated predictions for polynomial $\alpha$ attractors ([Kallosh and Linde 2022](https://arxiv.org/abs/2202.06492)) for $k=1, 2, 3, 4$ and $N_\star=40-65$ in `polynomial_alpha_attractor_lines/`.
+
+The notebook `poly_alpha_attractor_sym_reg.ipynb` also presents analytic formulas that can be used to get the $n_s$ and $r$ predictions for this model class found via symbolic regression. These are fast to evaluate, differentiable, and can be used to interpolate between models that are not present in `polynomial_alpha_attractor_lines/`.
+
 ## Repository Structure
 
 ```
 r_ns_2025/
-├── streamlit_app.py              # Online plotting app
-├── r_ns_plot.py                  # Simple plotting script
-├── r_ns_plot.ipynb               # Jupyter notebook for paper plots
-├── theory_models.py              # Inflation model predictions
-├── plot_style.py                 # Matplotlib styling and configuration
-├── legend_utils.py               # Custom legend handlers
-├── generic_r_ns_calculation.py   # Code to calculate r, ns given an inflaton potential
-└── chains/                       # MCMC chains
+├── .streamlit/                         # Online plotting app setup
+├── polynomial_alpha_attractor_lines/   # Pre-calculated results for model
+├── chains/                             # MCMC chains
     ├── SPA_BK/
     └── SPA_BK_DESI/
+├── streamlit_app.py                    # Online plotting app code
+├── r_ns_plot.py                        # Simple plotting script
+├── r_ns_plot.ipynb                     # Jupyter notebook for paper plots
+├── theory_models.py                    # Inflation model predictions
+├── plot_style.py                       # Matplotlib styling
+├── legend_utils.py                     # Custom legend handlers
+├── generic_r_ns_calculation.py         # Code to get r, ns from potential
+├── poly_alpha_attractor_sym_reg.ipynb  # Symbolic regression for model
+└── paa_sr_results.csv                  # Results of symbolic regression run
 ```
 
 ## Citing this work
