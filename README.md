@@ -40,6 +40,8 @@ Note that these scripts come with the following requirements:
 - jupyter (to run the notebook)
 ```
 
+Finally, if you want to load the contours in other programs, e.g. in Mathematica, you can find files containing points lying on the key contours in `contour_lines/`
+
 ## MCMC products
 
 The `chains/` folder contains MCMC chains and best-fit points obtained using [Cobaya](https://github.com/CobayaSampler/cobaya) and [CLASS](http://class-code.net/) for $\Lambda\mathrm{CDM}+r$.
@@ -80,6 +82,7 @@ r_ns_2025/
 ├── plot_style.py                       # Matplotlib styling
 ├── legend_utils.py                     # Custom legend handlers
 ├── generic_r_ns_calculation.py         # Code to get r, ns from potential
+├── contour_lines                       # Points of key contours
 ├── poly_alpha_attractor_sym_reg.ipynb  # Symbolic regression for model
 └── paa_sr_results.csv                  # Results of symbolic regression run
 ```
