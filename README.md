@@ -40,7 +40,7 @@ Note that these scripts come with the following requirements:
 - jupyter (to run the notebook)
 ```
 
-Finally, if you want to load the contours in other programs, e.g. in Mathematica, you can find files containing points lying on the key contours in `contour_lines/`
+Finally, if you want to load the contours in other programs, e.g. in Mathematica, you can find files containing points tracing the key contours in `contour_lines/`.
 
 ## MCMC products
 
